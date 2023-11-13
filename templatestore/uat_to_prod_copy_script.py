@@ -14,13 +14,13 @@ Steps to run the script:
 """
 
 
-# TODO Be careful with prod
-ENV = "local"
+SOURCE_DB = "uat"
 
 from templatestore.models import *
 
 TEMPLATES = []
 
+# TODO Please update this mapping if there are any additions in the template_subtemplate table
 UAT_TO_PROD_SUBTEMPLATE_ID_MAPPING = {
     1: 1,
     2: 2,
@@ -40,7 +40,9 @@ UAT_TO_PROD_SUBTEMPLATE_ID_MAPPING = {
 
 
 def clone_template(template_name):
-    template = Template.objects.filter(name=template_name).first()
+    template = Template.objects.using(SOURCE_DB).filter(name=template_name).first()
+
+    print(template.name)
 
     TEMPLATE = {
         "name": template.name,
@@ -50,9 +52,13 @@ def clone_template(template_name):
         "user_email": template.user_email,
     }
 
-    t = Template.objects.using(ENV).create(**TEMPLATE)
+    t = Template.objects.create(**TEMPLATE)
 
-    versions = TemplateVersion.objects.filter(template_id=template).all()
+    versions = (
+        TemplateVersion.objects.using(SOURCE_DB)
+        .filter(template_id=template)
+        .order_by("created_on")
+    )
 
     for version in versions:
         VERSION = {
@@ -64,13 +70,18 @@ def clone_template(template_name):
             "user_email": version.user_email,
             "tiny_url": version.tiny_url,
         }
-        v = TemplateVersion.objects.using(ENV).create(**VERSION)
+        print(VERSION)
+        v = TemplateVersion.objects.create(**VERSION)
 
         if template.default_version_id and version.id == template.default_version_id:
             t.default_version_id = v.id
             t.save()
 
-        sub_templates = SubTemplate.objects.filter(template_version_id=version.id).all()
+        sub_templates = (
+            SubTemplate.objects.using(SOURCE_DB)
+            .filter(template_version_id=version.id)
+            .all()
+        )
         for sub_template in sub_templates:
             SUB_TEMPLATE = {
                 "template_version_id_id": v.id,
@@ -81,7 +92,7 @@ def clone_template(template_name):
                 "data": sub_template.data,
             }
 
-            SubTemplate.objects.using(ENV).create(**SUB_TEMPLATE)
+            SubTemplate.objects.create(**SUB_TEMPLATE)
 
 
 if __name__ == "__main__":
