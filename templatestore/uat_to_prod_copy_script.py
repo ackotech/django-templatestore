@@ -9,7 +9,7 @@ Steps to run the script:
 1. Add templates list in TEMPLATES
 2. Add DESTINATION(PROD) DB details in default(https://github.com/ackotech/django-templatestore/blob/451e05893e13f8d3b984433b76b7224937ceeb61/example/settings.py#L74)
 3. Add SOURCE DB(ACKODEV) DB details after this line(https://github.com/ackotech/django-templatestore/blob/451e05893e13f8d3b984433b76b7224937ceeb61/example/settings.py#L81)
-    "uat": {"ENGINE":"django.db.backends.postgresql","NAME":"ackodev_templates","USER":"ackodev_templates_rw_v1","PASSWORD":"","HOST":"acko-services-dev-rds.acko.in","PORT":""}
+    "uat": {"ENGINE":"django.db.backends.postgresql","NAME":"ackodev_templates_clone","USER":"ackodev_templates_clone_rw_v1","PASSWORD":"","HOST":"master-db-11.internal.ackodev.com","PORT":"5432"}
 4. Update uat DB password.
 5. Run the script
 """
