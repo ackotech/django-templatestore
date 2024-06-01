@@ -168,7 +168,7 @@ class Home extends Component {
                     <SearchBox onChange={this.onSearchTextChange.bind(this)} />
                 </div>
                 <div className={styles.subcontainer}>
-                    <div className ={styles.left}> <h4> More Actions : </h4>
+                    <div className ={styles.left}> <h4> More Actions Here : </h4>
                         <div className={styles.tsAddTemplateBtn}>
                             <button
                                 type="button"
