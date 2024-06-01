@@ -162,7 +162,7 @@ class Home extends Component {
         return (
             <div className={styles.tsPage + ' container'}>
                 <div>
-                    <h1>Template Store</h1>
+                    <h1>Template Store UAT</h1>
                 </div>
                 <div className="d-flex justify-content-between mb-4">
                     <SearchBox onChange={this.onSearchTextChange.bind(this)} />
