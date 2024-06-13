@@ -35,9 +35,9 @@ function WhatsAppEditor(props) {
     const [ctaTypeDropdownOptions, setCtaTypeDropdownOptions] = useState([{ text: "Call Phone Number", value: "phone_number", disabled: false }, { text: "Visit Website", value: "url", disabled: false }]);
     useEffect(() => {
         if (buttonType == 'cta') {
-            setButtonCnt(2);
-        } else {
             setButtonCnt(3);
+        } else {
+            setButtonCnt(10);
         }
     }, [buttonType]);
     useEffect(() => {
@@ -134,6 +134,7 @@ function WhatsAppEditor(props) {
         };
         setButtonList(buttonListCopy);
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
+        setButtonType(''); // Reset the button type
     }
 
     function AddCtaButton() {
@@ -170,6 +171,7 @@ function WhatsAppEditor(props) {
         };
         setButtonList(buttonListCopy);
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
+        setButtonType(''); // Reset the button type
     }
 
     function deleteQuickReplyButton(id) {
