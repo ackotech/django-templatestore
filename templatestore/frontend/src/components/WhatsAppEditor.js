@@ -25,6 +25,11 @@ function WhatsAppEditor(props) {
                 JSON.parse(props.subTemplatesData.button.data)
     );
     const [buttonCnt, setButtonCnt] = useState(0);
+<<<<<<< Updated upstream
+=======
+    // eslint-disable-next-line no-unused-vars
+    const [{ urlCnt, phoneCnt, qrCnt }, setHybridButtonsCnt] = useState({ urlCnt: 0, phoneCnt: 0, qrCnt: 0 });
+>>>>>>> Stashed changes
     const [buttonType, setButtonType] = useState(
         props.editable ?
             '' :
@@ -36,6 +41,7 @@ function WhatsAppEditor(props) {
     useEffect(() => {
         if (buttonType == 'cta') {
             setButtonCnt(2);
+<<<<<<< Updated upstream
         } else {
             setButtonCnt(3);
         }
@@ -43,6 +49,33 @@ function WhatsAppEditor(props) {
     useEffect(() => {
         buttonList.buttons.forEach(button => {
             if (button.type == 'phone_number') {
+=======
+        } else if (buttonType == 'quick_reply') {
+            setButtonCnt(3);
+        } else {
+            setButtonCnt(10);
+            setHybridButtonsCnt({ urlCnt: 0, phoneCnt: 0, qrCnt: 0 });
+        }
+    }, [buttonType]);
+    useEffect(() => {
+        let ctaCount = 0;
+        let phoneCount = 0;
+        let qrCount = 0;
+        buttonList.buttons.forEach(button => {
+            if (buttonType == 'hybrid') {
+                switch (button.type) {
+                case 'url':
+                    ctaCount++;
+                    break;
+                case 'phone_number':
+                    phoneCount++;
+                    break;
+                default:
+                    qrCount++;
+                    break;
+                }
+            } else if (button.type == 'phone_number') {
+>>>>>>> Stashed changes
                 setCtaTypeDropdownOptions((prev) => {
                     prev[0].disabled = true;
                     return prev;
@@ -53,6 +86,22 @@ function WhatsAppEditor(props) {
                     return prev;
                 });
             }
+<<<<<<< Updated upstream
+=======
+            if (ctaCount == 2 || qrCount == 10) {
+                setCtaTypeDropdownOptions((prev) => {
+                    prev[1].disabled = true;
+                    return prev;
+                });
+            }
+            if (phoneCount == 1 || qrCnt == 10) {
+                setCtaTypeDropdownOptions((prev) => {
+                    prev[0].disabled = true;
+                    return prev;
+                });
+            }
+            setHybridButtonsCnt({ urlCnt: ctaCount, phoneCnt: phoneCount, qrCnt: qrCount });
+>>>>>>> Stashed changes
         });
     }, [buttonList]);
     function handleChange(e) {
@@ -73,6 +122,7 @@ function WhatsAppEditor(props) {
     function handleQuickReplyButtonChange(e, id) {
         let buttonListCopy = { ...buttonList };
         buttonListCopy.buttons = buttonList.buttons.map((button, index) => {
+<<<<<<< Updated upstream
             if (button.reply.id == id) {
                 return {
                     ...button,
@@ -81,6 +131,20 @@ function WhatsAppEditor(props) {
                         title: e.target.value
                     }
                 };
+=======
+            try {
+                if (button.reply.id == id) {
+                    return {
+                        ...button,
+                        reply: {
+                            id: id,
+                            title: e.target.value
+                        }
+                    };
+                }
+            } catch (e) {
+                return button;
+>>>>>>> Stashed changes
             }
             return button;
         });
@@ -112,14 +176,40 @@ function WhatsAppEditor(props) {
         case 'quick_reply':
             buttonType = 'quick_reply';
             break;
+<<<<<<< Updated upstream
         }
         setButtonType(buttonType);
         setButtonCnt(buttonType == 'cta' ? 2 : 3);
+=======
+        case 'hybrid':
+            buttonType = 'hybrid';
+        }
+        setButtonType(buttonType);
+        if (buttonType == 'hybrid') {
+            setHybridButtonsCnt({ urlCnt: 0, phoneCnt: 0, qrCnt: 0 });
+        }
+        setButtonCnt(buttonType == 'cta' ? 2 : (buttonType == 'hybrid' ? 10 : 3));
+>>>>>>> Stashed changes
         props.setButton(buttonType);
         props.onAttributesChange('button_type', buttonType);
     }
 
+<<<<<<< Updated upstream
     function AddQuickReplyButton() {
+=======
+    function addHybridButton(event) {
+        switch (event.target.value) {
+        case 'cta':
+            addCtaButton();
+            break;
+        case 'quick_reply':
+            addQuickReplyButton();
+            break;
+        }
+    }
+
+    function addQuickReplyButton() {
+>>>>>>> Stashed changes
         let buttonListCopy = {
             buttons: [
                 ...buttonList.buttons,
@@ -136,7 +226,11 @@ function WhatsAppEditor(props) {
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
     }
 
+<<<<<<< Updated upstream
     function AddCtaButton() {
+=======
+    function addCtaButton() {
+>>>>>>> Stashed changes
         let newButton;
         if (ctaTypeDropdownOptions[0].disabled == false) {
             newButton = {
@@ -157,10 +251,19 @@ function WhatsAppEditor(props) {
                 urlType: 'STATIC',
                 url: ''
             };
+<<<<<<< Updated upstream
             setCtaTypeDropdownOptions(prev => {
                 prev[1].disabled = true;
                 return prev;
             });
+=======
+            if (buttonType != 'hybrid') {
+                setCtaTypeDropdownOptions(prev => {
+                    prev[1].disabled = true;
+                    return prev;
+                });
+            }
+>>>>>>> Stashed changes
         }
         let buttonListCopy = {
             buttons: [
@@ -169,13 +272,39 @@ function WhatsAppEditor(props) {
             ]
         };
         setButtonList(buttonListCopy);
+<<<<<<< Updated upstream
+=======
+        let urlCount = 0;
+        buttonList.forEach(button => {
+            urlCount += (button.type == 'url' ? 1 : 0);
+        });
+        if (urlCount == 2) {
+            setCtaTypeDropdownOptions(prev => {
+                prev[1].disabled = true;
+                return prev;
+            });
+        } else {
+            setCtaTypeDropdownOptions(prev => {
+                prev[1].disabled = false;
+                return prev;
+            });
+        }
+>>>>>>> Stashed changes
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
     }
 
     function deleteQuickReplyButton(id) {
         let buttonListCopy = { ...buttonList };
         buttonListCopy.buttons = buttonList.buttons.filter(button => {
+<<<<<<< Updated upstream
             return button.reply.id != id;
+=======
+            try {
+                return button.reply.id != id;
+            } catch (e) {
+                return true;
+            }
+>>>>>>> Stashed changes
         });
         setButtonList(buttonListCopy);
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
@@ -336,6 +465,7 @@ function WhatsAppEditor(props) {
                         </select>
                     </div>
                 )}
+<<<<<<< Updated upstream
                 {buttonType != '' && buttonCnt - buttonList.buttons.length > 0 && (
                     <div>
                         <button
@@ -350,6 +480,28 @@ function WhatsAppEditor(props) {
                         </button>
                     </div>
                 )}
+=======
+
+                {buttonType != '' && buttonCnt - buttonList.buttons.length > 0 &&
+                <div> {buttonType == 'hybrid' ?
+                    (
+                        <div>
+                            {(urlCnt - 2 < 0 || phoneCnt - 1 < 0) &&
+                            <div>
+                                <button className={styles.waButton} value = "cta" onClick={addHybridButton}>Add Cta Button</button>
+                            </div>
+                            }
+                            <div>
+                                <button className={styles.waButton} value = "quick_reply" onClick={addHybridButton}>Add Qr Button</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <button className={styles.waButton} onClick={buttonType == 'cta' ? addCtaButton : addQuickReplyButton}>Add Button</button>
+                        </div>
+                    )}
+                </div>}
+>>>>>>> Stashed changes
             </div>
             <div className={styles.whatsapp_message_container}>
                 <div className={styles.whatsapp_preview_header}>
