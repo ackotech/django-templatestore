@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "-4ilr9f02lm#-il@-dc=^y4b&_zx#hl(0+3!h7fbko=^id^=p-"
-GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -70,34 +70,14 @@ WSGI_APPLICATION = "example.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.contrib.gis.db.backends.postgis",
-#         "NAME": "",
-#         "USER": "",
-#         "PASSWORD": "",
-#         "HOST": "",
-#         "PORT": "",
-#     }
-# }
-
 DATABASES = {
     "default": {
-<<<<<<< Updated upstream
         "ENGINE": "django.contrib.gis.db.backends.postgis",
         "NAME": "",
         "USER": "",
         "PASSWORD": "",
         "HOST": "",
         "PORT": "",
-=======
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "ackodev_templates_clone",
-        "USER": "ackodev_templates_clone_rw_v1",
-        "PASSWORD": "7O2xaMCPVGbOgVGapF8r",
-        "HOST": "master-db-11.internal.ackodev.com",
-        "PORT": "5432",
->>>>>>> Stashed changes
     }
 }
 
@@ -124,7 +104,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-# USE_TZ = True
+USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
