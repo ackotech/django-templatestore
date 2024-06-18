@@ -1089,7 +1089,7 @@ class TemplateScreen extends Component {
                                                     JSON.parse(
                                                         this.state.attributes
                                                     )?.wa_mode == 'one_way' ?
-                                                        ['cta', 'quick_reply'] :
+                                                        ['cta', 'quick_reply', 'hybrid'] :
                                                         [
                                                             'quick_reply'
                                                         ]
