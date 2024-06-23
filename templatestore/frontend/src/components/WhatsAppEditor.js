@@ -187,6 +187,7 @@ function WhatsAppEditor(props) {
         };
         setButtonList(buttonListCopy);
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
+        setButtonType(''); // Reset the button type
     }
 
     function addCtaButton() {
@@ -240,6 +241,7 @@ function WhatsAppEditor(props) {
             });
         }
         props.onTemplateChange('button', JSON.stringify(buttonListCopy));
+        setButtonType(''); // Reset the button type
     }
 
     function deleteQuickReplyButton(id) {
