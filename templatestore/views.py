@@ -538,7 +538,7 @@ def save_tiny_url(request):
 
 @csrf_exempt
 def get_render_template_view(request, name, version=None):
-    if request.method == "GET":
+    if request.method == "GET" or request.methond == "POST":
         try:
             data = json.loads(request.body)
             if "context_data" not in data:
