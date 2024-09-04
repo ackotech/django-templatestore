@@ -12,7 +12,13 @@ from templatestore.utils import (
     base64decode,
     base64encode,
     generatePayload,
+    get_template_data_from_vendor
 )
+from templatestore.vendor_utils import (
+    async_multiple_api_calls_view,
+    send_message
+)
+
 from templatestore import app_settings as ts_settings
 from django.db import connection
 
@@ -872,3 +878,40 @@ def patch_attributes_view(request, name):
             content_type="application/json",
             status=404,
         )
+
+@csrf_exempt
+def test_endpoint(request):
+    # if request.method != "POST":
+    #     return HttpResponse(
+    #         json.dumps({"message": "no method found"}),
+    #         content_type="application/json",
+    #         status=404,
+    #     )
+    gupshup_template_update_event = json.loads(request.body)
+    print(gupshup_template_update_event)
+    
+    templates_to_be_fetched = []
+
+    for event_data in gupshup_template_update_event:
+        if event_data['field'] == 'message_template_status_update' and event_data['event'] == 'ENABLED':
+            templates_to_be_fetched.append(
+                {
+                    'account_id': event_data['account'], 
+                    'vendor': 'GUPSHUP',
+                    'vendor_template_name': event_data['message_template_name'],
+                    'vendor_template_id': event_data['message_template_id']
+                }
+            )
+
+    template_request = {
+        "template_name": "test_all_buttons_1",
+        "vendor": "GUPSHUP",
+        "userid": "2000184968",
+        "password": "TgqaruTx"
+    }
+    # response  = get_template_data_from_vendor(template_request)
+    # response = async_multiple_api_calls_view()
+    response = send_message(None, None)
+    print("success -> ", response)
+    return JsonResponse(template_request)
+    

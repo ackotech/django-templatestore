@@ -3,6 +3,8 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import pytz
 import re
+import urllib.parse
+import requests
 
 regex = re.compile(
         r'^https?://'  # http:// or https://
@@ -58,3 +60,35 @@ def generatePayload(templateTable, versionTable, data):
         )
         i = i + 1
     return ans
+
+def get_template_data_from_vendor(template_request):
+    
+    if template_request['vendor'] == 'GUPSHUP':
+        
+
+        url = "https://wamedia.smsgupshup.com/GatewayAPI/rest"
+
+        # Request parameters (data to be sent in the POST request)
+        params = {
+            "method": "get_whatsapp_hsm",
+            "userid": template_request['userid'],
+            "password": template_request['password'],
+            "limit": "2000",
+            "name": template_request['template_name'],
+            "fields": "%5B%22buttons%22%2C%22previouscategory%22%5D",
+        }
+
+        response = requests.get(url, params=params)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            json_response = response.json()
+            print(json_response)
+            return json_response
+        else:
+            print(f"Request failed with status code: {response.status_code}")
+            print(response.text)
+    
+    else:
+        return {"status": "failed", "reason": "vendor not found"}
