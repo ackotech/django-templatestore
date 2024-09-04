@@ -1,73 +1,7 @@
 # views.py
 
-from django.http import JsonResponse
-import aiohttp
-import asyncio
 import json
-
 import boto3
-
-async def async_multiple_api_calls_view():
-    # Define a list of URLs to call
-    api_urls = [
-        "https://wamedia.smsgupshup.com/GatewayAPI/rest",
-        "https://wamedia.smsgupshup.com/GatewayAPI/rest",
-        "https://wamedia.smsgupshup.com/GatewayAPI/rest",
-        # Add more URLs as needed
-    ]
-
-    userid = "2000184968"
-    password = 'TgqaruTx'
-    template_name = 'test_all_buttons_1'
-    # Query parameters corresponding to each URL (could be the same or different)
-    query_params = [
-        {
-            "method": "get_whatsapp_hsm",
-            "userid": userid,
-            "password": password,
-            "limit": "2000",
-            "name": template_name,
-            "fields": "%5B%22buttons%22%2C%22previouscategory%22%5D",
-        },
-        {
-            "method": "get_whatsapp_hsm",
-            "userid": userid,
-            "password": password,
-            "limit": "2000",
-            "name": template_name,
-            "fields": "%5B%22buttons%22%2C%22previouscategory%22%5D",
-        },
-        {
-            "method": "get_whatsapp_hsm",
-            "userid": userid,
-            "password": password,
-            "limit": "2000",
-            "name": template_name,
-            "fields": "%5B%22buttons%22%2C%22previouscategory%22%5D",
-        },
-        # Add more parameters as needed
-    ]
-
-    async with aiohttp.ClientSession() as session:
-        # Create a list of coroutines (tasks) for each API call
-        tasks = [client.get(url, params=params) for url, params in zip(api_urls, query_params)]
-
-        # Run the tasks concurrently and wait for all of them to finish
-        responses = await asyncio.gather(*tasks)
-
-    # Process the responses
-    results = []
-    for response in responses:
-        async with response:
-            if response.status == 200:
-                data = await response.json()
-                results.append(data)
-            else:
-                results.append({"error": f"Failed to fetch {response.url}", "status": response.status})
-
-    # Return the combined results as a JSON response
-    print(result)
-    return JsonResponse({"results": results})
 
 
 def send_message(message_body, message_attributes=None):
