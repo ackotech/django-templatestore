@@ -15,7 +15,6 @@ from templatestore.utils import (
     get_template_data_from_vendor
 )
 from templatestore.vendor_utils import (
-    async_multiple_api_calls_view,
     send_message
 )
 
