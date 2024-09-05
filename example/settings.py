@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "templatestore",
+    "templatestore.apps.TemplateStoreAppConfig"
 ]
 
 MIDDLEWARE = [
@@ -72,14 +72,28 @@ WSGI_APPLICATION = "example.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": "",
-        "USER": "",
-        "PASSWORD": "",
-        "HOST": "",
-        "PORT": "",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "ackodev_templates_clone",
+        "USER": "ackodev_templates_clone_rw_v1",
+        "PASSWORD": "7O2xaMCPVGbOgVGapF8r",
+        "HOST": "master-db-11.internal.ackodev.com",
+        "PORT": "5432",
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "OPTIONS": {
+#             "ENGINE": "django.db.backends.postgresql_psycopg2",
+#             "NAME": "ackodev_templates_clone",
+#             "USER": "ackodev_templates_clone_rw_v1",
+#             "PASSWORD": "7O2xaMCPVGbOgVGapF8r",
+#             "HOST": "master-db-11.internal.ackodev.com",
+#             "PORT": "5432"
+#         },
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -133,3 +147,5 @@ TE_TEMPLATE_ATTRIBUTES = {
 
 TE_ROWLIMIT = 1000
 TE_BASEPATH = "/"
+
+GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"
