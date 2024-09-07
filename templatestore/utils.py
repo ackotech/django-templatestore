@@ -58,3 +58,4 @@ def generatePayload(templateTable, versionTable, data):
         )
         i = i + 1
     return ans
+
