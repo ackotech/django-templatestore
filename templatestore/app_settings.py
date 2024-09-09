@@ -17,3 +17,5 @@ QUERY="Select * from (with v2 as (select * from templatestore_template_version w
 
 GUPSHUP_WA_TEMPLATE_SYNC = getattr(settings, "GUPSHUP_WA_TEMPLATE_SYNC", "https://wamedia.smsgupshup.com/GatewayAPI/rest")
 GUPSHUP_WA_CREDENTIAL = getattr(settings, "GUPSHUP_WA_CREDENTIAL", [{"user_id": "2000184968", "password": "TgqaruTx"}])
+GUPSHUP_WA_CREDENTIAL_LOB_MAP = getattr(settings, "GUPSHUP_WA_CREDENTIAL_LOB_MAP", {})
+ROBO_EMAIL = getattr(settings, "ROBO_EMAIL", "")

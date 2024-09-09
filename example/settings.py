@@ -127,9 +127,41 @@ TE_TEMPLATE_ATTRIBUTES = {
         ],
     },
     "journey": {
-        "allowed_values": ["Policy", "Claim", "IVR", "Purchase", "Pre Inspection", "CX 360", "Reporting", "Payout"],
+        "allowed_values": ["Policy", "Claim", "IVR", "Purchase", "Pre Inspection", "CX 360", "Reporting", "Payout",
+                           "Garage", "auto_sync"],
     },
+}
+
+GUPSHUP_WA_CREDENTIAL_LOB_MAP = {
+    "2000214144": {
+        "lob": "Electronics",
+        "journey": "Policy",
+        "wa_mode": "one_way"
+    },
+    "2000189615": {
+        "lob": "Acko Drive",
+        "journey": "Policy",
+        "wa_mode": "one_way"
+    },
+    "2000238490": {
+        "lob": "Auto",
+        "journey": "Garage",
+        "wa_mode": "one_way"
+    },
+    "2000184969": {
+        "lob": "Central",
+        "wa_mode": "two_way"
+    },
+    "2000184968": {
+        "lob": "Central",
+        "journey": "auto_sync",
+        "wa_mode": "one_way"
+    }
 }
 
 TE_ROWLIMIT = 1000
 TE_BASEPATH = "/"
+
+ROBO_EMAIL = "robo-central-growth@acko.tech"
+
+GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"

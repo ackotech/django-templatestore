@@ -8,7 +8,7 @@ import re
 import logging
 import requests
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
-from templatestore.template_utils import transform_gupshup_request, save_template
+from templatestore.template_utils import transform_gupshup_request, save_template, make_template_default
 from templatestore.utils import (
     base64decode,
     base64encode,
@@ -482,53 +482,11 @@ def get_template_details_view(request, name, version):
             if not data.get("default", False):
                 return HttpResponse(status=400)
 
-            try:
-                tmp = Template.objects.get(name=name)
-            except Exception:
-                raise (Exception("Validation: Template with given name does not exist"))
+            data['name'] = name
+            data['version'] = version
+            user_email = request.POST.get("email")
 
-            max_version = TemplateVersion.objects.filter(template_id=tmp).order_by(
-                "-id"
-            )[:1]
-
-            major_version, minor_version = max_version[0].version.split(".")
-            new_version = str(float(major_version) + 1)
-
-            try:
-                tmp_ver = TemplateVersion.objects.get(
-                    template_id=tmp.id, version=version
-                )
-            except Exception:
-                raise (
-                    Exception(
-                        "Validation: Template with given name and version does not exist"
-                    )
-                )
-
-            sts = SubTemplate.objects.filter(template_version_id=tmp_ver.id)
-
-            tmp_ver_new = TemplateVersion.objects.create(
-                template_id=tmp,
-                version=new_version,
-                sample_context_data=tmp_ver.sample_context_data,
-                version_alias=tmp_ver.version_alias,
-                user_email=request.POST.get("email"),
-            )
-            tmp_ver_new.save()
-
-            for st in sts:
-                SubTemplate.objects.create(
-                    template_version_id=tmp_ver_new, config=st.config, data=st.data
-                ).save()
-            tmp.default_version_id = tmp_ver_new.id
-            tmp.save(update_fields=["default_version_id", "modified_on"])
-
-            template_data = {
-                "name": tmp.name,
-                "version": tmp_ver_new.version,
-                "default": True if tmp.default_version_id == tmp_ver_new.id else False,
-                "attributes": tmp.attributes,
-            }
+            template_data = make_template_default(data, user_email)
             return JsonResponse(template_data, status=200)
 
         except Exception as e:
@@ -697,4 +655,19 @@ def sync_template(request, vendor, channel):
           ]
         }
         """
-        transform_gupshup_request(request_body)
+        try:
+            response = transform_gupshup_request(request_body)
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=400,
+            )
+    else:
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )

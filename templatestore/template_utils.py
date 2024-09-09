@@ -1,10 +1,12 @@
 import json
 import logging
 import re
+import time
 import uuid
 import requests
 
 from templatestore import app_settings
+from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate
 from templatestore.utils import base64encode
 from templatestore import app_settings as ts_settings
@@ -118,17 +120,32 @@ def transform_gupshup_request(data):
                     'data': base64encode(json.dumps(buttons))
                 })
 
+            create_template_request['attributes'] = GUPSHUP_WA_CREDENTIAL_LOB_MAP[str(template_event['account'])]
+            create_template_request['version_alias'] = "auto_sync_" + str(int(time.time()))
+
             logger.info(f"Converted create template request -> {create_template_request}")
 
+            res = save_template(create_template_request, user_email=ROBO_EMAIL)
+            logger.info(f"Save Template Response for Auto Save -> {res}")
+            default_req = {
+                "name": create_template_request["name"],
+                "version": res['version'],
+                "default": True
+            }
+            default_res = make_template_default(default_req, user_email=ROBO_EMAIL)
+            logger.info(f"Created default request -> {default_res}")
+            return default_res
 
 def get_whatsapp_gupshup_template(template_detail):
     params = {
         'method': 'get_whatsapp_hsm',
-        'name': str(template_detail['name']),
-        'limit': 2000,
         'fields': "%5B%22buttons%22%2C%22previouscategory%22%5D",
         'userid': str(template_detail['user_id'])
     }
+    if 'limit' in template_detail:
+        params['limit'] = template_detail['limit']
+    if 'name' in template_detail:
+        params['name'] = template_detail['name']
 
     for credential in app_settings.GUPSHUP_WA_CREDENTIAL:
         if credential['user_id'] == str(template_detail['user_id']):
@@ -249,10 +266,10 @@ def save_template(data, user_email):
             Exception("Validation: sample_context_data field can not be empty")
         )
 
-    if not re.match("(^[a-zA-Z0-9 ]*$)", data.get("version_alias", "")):
+    if not re.match("(^[_a-zA-Z0-9 ]*$)", data.get("version_alias", "")):
         raise (
             Exception(
-                "Validation: version_alias must contain only alphanumeric and space characters"
+                "Validation: version_alias must contain only alphanumeric and space and underscore characters"
             )
         )
 
@@ -359,5 +376,56 @@ def save_template(data, user_email):
         "version": version,
         "default": False,
         "attributes": template.attributes,
+    }
+    return template_data
+
+
+def make_template_default(data, user_email):
+    try:
+        tmp = Template.objects.get(name=data['name'])
+    except Exception:
+        raise (Exception("Validation: Template with given name does not exist"))
+
+    max_version = TemplateVersion.objects.filter(template_id=tmp).order_by(
+        "-id"
+    )[:1]
+
+    major_version, minor_version = max_version[0].version.split(".")
+    new_version = str(float(major_version) + 1)
+
+    try:
+        tmp_ver = TemplateVersion.objects.get(
+            template_id=tmp.id, version=data['version']
+        )
+    except Exception:
+        raise (
+            Exception(
+                "Validation: Template with given name and version does not exist"
+            )
+        )
+
+    sts = SubTemplate.objects.filter(template_version_id=tmp_ver.id)
+
+    tmp_ver_new = TemplateVersion.objects.create(
+        template_id=tmp,
+        version=new_version,
+        sample_context_data=tmp_ver.sample_context_data,
+        version_alias=tmp_ver.version_alias,
+        user_email=user_email,
+    )
+    tmp_ver_new.save()
+
+    for st in sts:
+        SubTemplate.objects.create(
+            template_version_id=tmp_ver_new, config=st.config, data=st.data
+        ).save()
+    tmp.default_version_id = tmp_ver_new.id
+    tmp.save(update_fields=["default_version_id", "modified_on"])
+
+    template_data = {
+        "name": tmp.name,
+        "version": tmp_ver_new.version,
+        "default": True if tmp.default_version_id == tmp_ver_new.id else False,
+        "attributes": tmp.attributes,
     }
     return template_data
