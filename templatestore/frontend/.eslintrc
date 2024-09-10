@@ -24,6 +24,7 @@
       "eol-last": "warn",
       "object-curly-spacing": false,
       "padded-blocks": false,
-      "no-unused-vars": false
+      "no-unused-vars": false,
+      "quote-props": false
    }
 }

@@ -3,6 +3,7 @@ import Select from "react-select";
 import axios from "axios";
 import { FidgetSpinner } from "react-loader-spinner";
 import { backendSettings } from "./../utils.js";
+import styles from '../style/WhatsAppEditor.less';
 
 const transformVendors = vendorDetail => {
   if (!vendorDetail) return [];
@@ -18,6 +19,44 @@ const transformVendors = vendorDetail => {
   });
   return Object.values(uniqueVendors);
 };
+
+const customStyles = {
+    control: (provided, state) => ({
+      ...provided,
+      borderColor: state.isFocused ? "#4a90e2" : "#ddd",
+      boxShadow: state.isFocused ? "0 0 0 1px #4a90e2" : "none",
+      "&:hover": {
+        borderColor: "#4a90e2"
+      },
+      marginBottom: "12px",
+      width: "600px"
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? "#4a90e2" : "#fff",
+      color: state.isSelected ? "#fff" : "#333",
+      width: "600px",
+      "&:hover": {
+        backgroundColor: "#e6f0ff",
+        color: "#333"
+      }
+    }),
+    menu: (provided) => ({
+      ...provided,
+      marginTop: "0",
+      borderRadius: "8px",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+      width: "600px",
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: "#888"
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: "#333"
+    })
+  };
 
 const transformAccounts = (vendorDetail, selectedVendor) => {
   return vendorDetail
@@ -41,6 +80,7 @@ const SyncTemplate = ({ stateVar }) => {
   const [viewAccountIdOption, setViewAccountIdOption] = useState(false);
   const [thirdDropdownOptions, setThirdDropdownOptions] = useState([]);
   const [viewThirdOption, setViewThirdOption] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState(null);
   const [loader, setLoader] = useState(false);
 
   // Ensure vendor details are available
@@ -58,6 +98,14 @@ const SyncTemplate = ({ stateVar }) => {
   const handleAccountChange = selectedOption => {
     setSelectedAccountId(selectedOption);
   };
+
+  const handleTemplateChange = selectedOption => {
+    setSelectedTemplateName(selectedOption)
+  }
+
+  const postSyncTemplate = () => {
+    
+  }
 
   // API call using useEffect based on accountId and vendor selection
   useEffect(() => {
@@ -88,12 +136,14 @@ const SyncTemplate = ({ stateVar }) => {
       ) : (
         <>
           <Select
+            styles={customStyles}
             value={selectedVendor}
             options={transformVendors(stateVar.vendorDetail.data)}
             onChange={handleVendorChange}
           />
           {viewAccountIdOption && (
             <Select
+              styles={customStyles}
               value={selectedAccountId}
               options={transformAccounts(
                 stateVar.vendorDetail.data,
@@ -102,7 +152,12 @@ const SyncTemplate = ({ stateVar }) => {
               onChange={handleAccountChange}
             />
           )}
-          {viewThirdOption && <Select options={thirdDropdownOptions} />}
+          {viewThirdOption && (
+            <Select options={thirdDropdownOptions} 
+                    value={selectedTemplateName} 
+                    onChange={handleTemplateChange}
+                    styles={customStyles} />)}
+          {selectedTemplateName && <button className={styles.waButton} onClick={postSyncTemplate}>Save Template</button>}
         </>
       )}
     </>
