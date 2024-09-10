@@ -103,3 +103,21 @@ class SubTemplate(models.Model):
 
     class Meta:
         db_table = "templatestore_sub_template"
+
+class TemplateServiceProvider(models.Model):
+    id = models.AutoField(primary_key=True)
+    vendor = models.CharField(max_length=1000)
+    channel = models.CharField(max_length=1000)
+    account_id = models.CharField(max_length=1000)
+    is_active = models.BooleanField(default=True, blank=False)
+    created_on = models.DateTimeField(auto_now_add=True)
+    modified_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "templatestore_template_service_provider"
+
+    def get_all_objects(self):
+        queryset = self._meta.model.objects.all()
+        # can use the below method also
+        # queryset = self.__class__.objects.all()
+        return queryset

@@ -2,7 +2,7 @@
    "parser": "babel-eslint",
    "extends": [
       "react",
-//       "eslint:recommended",
+      // "eslint:recommended",
       ],
    "env": {
       "browser": true,
@@ -14,10 +14,14 @@
       }
    },
    "rules": {
-      "indent": ["error", 4],
-      "space-before-function-paren": ["error", "never"],
+      "indent": ["warn", 4],
+      "space-before-function-paren": ["warn"],
       "eqeqeq": "off",
       "no-nested-ternary":"off",
-      "camelcase":"off"
+      "camelcase":"off",
+      "no-trailing-spaces": "off",
+      "semi": "off",
+      "eol-last": "warn",
+      "object-curly-spacing": false
    }
 }

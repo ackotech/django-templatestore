@@ -7,7 +7,7 @@ import requests
 
 from templatestore import app_settings
 from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL
-from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate
+from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
 from templatestore.utils import base64encode
 from templatestore import app_settings as ts_settings
 
@@ -429,3 +429,31 @@ def make_template_default(data, user_email):
         "attributes": tmp.attributes,
     }
     return template_data
+
+def save_vendor_info(data):
+    tmp = TemplateServiceProvider.objects.create(
+        vendor=data['vendor'],
+        channel=data['channel'],
+        account_id=data['account_id'],
+        is_active=True
+    )
+    tmp.save()
+    data["is_active"] = tmp.is_active
+    data['created_on'] = tmp.created_on
+    data['modified_on'] = tmp.modified_on
+    return data
+
+
+def get_vendor_info():
+    ts = TemplateServiceProvider().get_all_objects()
+
+    res = {"data": []}
+    for t in ts:
+        res["data"].append({
+            "id": t.id,
+            "vendor": t.vendor,
+            "channel": t.channel,
+            "account_id": t.account_id,
+            "is_active": t.is_active
+        })
+    return res

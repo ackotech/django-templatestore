@@ -8,6 +8,7 @@ import {
     backendSettings,
     getDateInSimpleFormat
 } from './../utils.js';
+import SyncTemplate from '../components/SyncTemplate.js';
 import PropTypes from 'prop-types';
 import styles from './../style/templateScreen.less';
 import SearchBox from './../components/searchBox/index';
@@ -38,6 +39,7 @@ class TemplateScreen extends Component {
             versions: [{ version: this.props.match.params.version }],
             subTemplatesData: {},
             config: {},
+            vendorDetail: {},
             contextData: '',
             alertMessage: '',
             attributes: '{}',
@@ -175,6 +177,17 @@ class TemplateScreen extends Component {
                     });
                 }
                 this.updateUrlKeyList();
+            })
+            .catch(function(error) {
+                console.log(error);
+            });
+        
+        axios
+            .get(backendSettings.TE_BASEPATH + '/internal/api/v1/vendor')
+            .then(response => {
+                this.setState({
+                    vendorDetail: response.data
+                });
             })
             .catch(function(error) {
                 console.log(error);
@@ -1147,7 +1160,9 @@ class TemplateScreen extends Component {
                         ) : (
                             ''
                         )}
+                        {this.state.type == 'whatsapp' ? (<SyncTemplate vendorDetail={this.state.vendorDetail.data} />) : ('')}
                         <br />
+                        
                         <div className={styles.teVersionWrapper}>
                             <label>Version : </label>
                             {!this.state.editable ? (

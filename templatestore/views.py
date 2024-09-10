@@ -7,8 +7,9 @@ import json
 import re
 import logging
 import requests
-from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
-from templatestore.template_utils import transform_gupshup_request, save_template, make_template_default
+from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig, TemplateServiceProvider
+from templatestore.template_utils import transform_gupshup_request, save_template, make_template_default, \
+    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template
 from templatestore.utils import (
     base64decode,
     base64encode,
@@ -671,3 +672,73 @@ def sync_template(request, vendor, channel):
             content_type="application/json",
             status=404,
         )
+
+
+@csrf_exempt
+def vendor_view(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            if ("vendor" not in data) or ("channel" not in data) or ("account_id" not in data):
+                return JsonResponse(json.dumps({"message": "required parameter missing"}), status=400)
+
+            data = save_vendor_info(data)
+
+            return JsonResponse(data, status=200)
+
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=500,
+            )
+
+    elif request.method == "GET":
+        try:
+            res = get_vendor_info()
+            return JsonResponse(res, status=200)
+
+
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=404,
+            )
+
+
+@csrf_exempt
+def get_vendor_template(request, vendor, channel):
+    if request.method != "GET":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+    if request.GET.get("account_id") is None:
+        return JsonResponse(
+            {"message": "Account Id is required"},
+            status=400,
+        )
+    account_id = request.GET.get("account_id")
+    found_config = False
+    res = get_vendor_info()
+    for vendor_info in res['data']:
+        if vendor.lower() == vendor_info['vendor'].lower() and channel.lower() == vendor_info['channel'].lower() and account_id.lower() == vendor_info['vendor'].lower():
+            found_config = True
+            break
+    if not found_config:
+        JsonResponse({"message": "vendor config not found"}, status=400)
+
+    if vendor.lower() == "gupshup":
+        template_detail = {
+            'user_id': str(account_id)
+        }
+        if request.GET.get("template_name") is not None:
+            template_detail['name'] = request.GET.get("template_name")
+        data = get_whatsapp_gupshup_template(template_detail)
+
+    return JsonResponse(data, status=200)
