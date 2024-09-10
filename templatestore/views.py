@@ -739,6 +739,10 @@ def get_vendor_template(request, vendor, channel):
         }
         if request.GET.get("template_name") is not None:
             template_detail['name'] = request.GET.get("template_name")
+        if request.GET.get("limit") is not None:
+            template_detail['limit'] = request.GET.get("limit")
+        else:
+            template_detail['limit'] = 10000
         data = get_whatsapp_gupshup_template(template_detail)
 
     return JsonResponse(data, status=200)

@@ -505,8 +505,7 @@ class TemplateScreen extends Component {
         }
     }
 
-    onTemplateChange(subType, templateData) {
-        console.log(subType, templateData);
+    onTemplateChange(subType, templateData) {     
         this.setState({
             subTemplatesData: Object.keys(this.state.subTemplatesData).reduce(
                 (result, k) => {
@@ -649,10 +648,23 @@ class TemplateScreen extends Component {
                     'Validation: `' + name + '` is not a valid template name'
                 );
             }
-
             let subTemplates = [];
-            Object.keys(this.state.subTemplatesData).map(t => {
+            console.log("After -----", this.state.subTemplatesData)
+            Object.keys(this.state.subTemplatesData)
+            .filter(t => {
+                // Fix for removing empty button array in subtemplate
+                if (t === 'button') {
+                    let tmpButtonList = JSON.parse(this.state.subTemplatesData.button.data);
+                    if (tmpButtonList['buttons'].length === 0) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .map(t => {
+                console.log("POst template data -> ", t);
                 if (Array.isArray(this.state.subTemplatesData[t])) return;
+                
                 let subTemplate = {
                     sub_type: this.state.subTemplatesData[t].subType,
                     render_mode: this.state.subTemplatesData[t].renderMode,
@@ -660,7 +672,7 @@ class TemplateScreen extends Component {
                 };
                 subTemplates.push(subTemplate);
             });
-
+            console.log("Subtemplate Array-> ", subTemplates)
             try {
                 contextData = JSON.parse(contextData);
             } catch (error) {
@@ -1160,7 +1172,7 @@ class TemplateScreen extends Component {
                         ) : (
                             ''
                         )}
-                        {this.state.type == 'whatsapp' ? (<SyncTemplate vendorDetail={this.state.vendorDetail.data} />) : ('')}
+                        {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} />) : ('')}
                         <br />
                         
                         <div className={styles.teVersionWrapper}>

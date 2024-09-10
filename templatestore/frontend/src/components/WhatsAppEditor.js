@@ -49,6 +49,7 @@ function WhatsAppEditor(props) {
         let ctaCount = 0;
         let phoneCount = 0;
         let qrCount = 0;
+        console.log(`Buttoon list :${buttonList}`)
         buttonList.buttons.forEach(button => {
             if (buttonType == 'hybrid') {
                 switch (button.type) {
@@ -225,6 +226,7 @@ function WhatsAppEditor(props) {
         };
         setButtonList(buttonListCopy);
         let urlCount = 0;
+        console.log(`CTA button ${buttonList}`)
         buttonList.forEach(button => {
             urlCount += (button.type == 'url' ? 1 : 0);
         });
