@@ -4,6 +4,7 @@ import axios from "axios";
 import { FidgetSpinner } from "react-loader-spinner";
 import { backendSettings } from "./../utils.js";
 import styles from '../style/WhatsAppEditor.less';
+import { withRouter } from "react-router-dom";
 
 const transformVendors = vendorDetail => {
   if (!vendorDetail) return [];
@@ -74,7 +75,7 @@ const transformResponseData = responseData => {
   }));
 };
 
-const SyncTemplate = ({ stateVar }) => {
+const SyncTemplate = ({ stateVar, history }) => {
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [viewAccountIdOption, setViewAccountIdOption] = useState(false);
@@ -117,7 +118,7 @@ const SyncTemplate = ({ stateVar }) => {
     )
     .then(response => {
         // TODO: Check this 
-        this.props.history.push(
+        history.push(
             backendSettings.TE_BASEPATH +
                 '/t/' +
                 response.data.name +
@@ -198,4 +199,4 @@ const SyncTemplate = ({ stateVar }) => {
   );
 };
 
-export default SyncTemplate;
+export default withRouter(SyncTemplate);

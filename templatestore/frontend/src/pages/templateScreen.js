@@ -1163,7 +1163,7 @@ class TemplateScreen extends Component {
                         </h1>
                     </div>) : ("")}
                     <div>
-                    {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} />) : ('')}
+                    {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
                     <br />
                     <div className={styles.teTemplateHeader}>
                         <h1>
