@@ -92,6 +92,8 @@ const SyncTemplate = ({ stateVar }) => {
     setViewAccountIdOption(true);
     setViewThirdOption(false);
     setThirdDropdownOptions([]);
+    setSelectedAccountId('');
+    setSelectedTemplateName('');
   };
 
   // Handle account change
