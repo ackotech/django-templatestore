@@ -6,11 +6,11 @@ import { backendSettings } from "./../utils.js";
 import styles from '../style/WhatsAppEditor.less';
 import { withRouter } from "react-router-dom";
 
-const transformVendors = vendorDetail => {
+const transformVendors = (vendorDetail, channel) => {
   if (!vendorDetail) return [];
   const uniqueVendors = {};
   vendorDetail.forEach(v => {
-    if (!uniqueVendors[v.vendor]) {
+    if (!uniqueVendors[v.vendor] && v.channel.toLowerCase() == channel.toLowerCase()) {
       uniqueVendors[v.vendor] = {
         value: v.vendor,
         label: v.vendor,
@@ -171,7 +171,7 @@ const SyncTemplate = ({ stateVar, history }) => {
             styles={customStyles}
             value={selectedVendor}
             placeholder="Select the Template Vendor"
-            options={transformVendors(stateVar.vendorDetail.data)}
+            options={transformVendors(stateVar.vendorDetail.data, stateVar.type)}
             onChange={handleVendorChange}
           />
           {viewAccountIdOption && (
