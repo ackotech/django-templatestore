@@ -97,6 +97,7 @@ const SyncTemplate = ({ stateVar }) => {
   // Handle account change
   const handleAccountChange = selectedOption => {
     setSelectedAccountId(selectedOption);
+    setSelectedTemplateName('');
   };
 
   const handleTemplateChange = selectedOption => {
