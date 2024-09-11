@@ -3,19 +3,20 @@ import logging
 import re
 import time
 import uuid
+
 import requests
 
 from templatestore import app_settings
-from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL
+from templatestore import app_settings as ts_settings
+from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
 from templatestore.utils import base64encode
-from templatestore import app_settings as ts_settings
 
 logger = logging.getLogger(__name__)
 
 
-def transform_gupshup_request(data):
-    if data['vendor'] == "GUPSHUP" and data['channel'] == "WHATSAPP":
+def transform_gupshup_request(data, user_email):
+    if data['vendor'].upper() == "GUPSHUP" and data['channel'].upper() == "WHATSAPP":
         event_list = data['data']
         for template_event in event_list:
             """
@@ -53,7 +54,7 @@ def transform_gupshup_request(data):
             if "body" in result:
                 matches = re.findall(r"\{\{\d+}}", result['body'])
                 variable_count = len(matches)
-            for i in range(0, variable_count):
+            for i in range(1, variable_count+1):
                 create_template_request['sample_context_data'][str(i)] = "sample"
 
             create_template_request['sub_templates'].append({
@@ -125,14 +126,14 @@ def transform_gupshup_request(data):
 
             logger.info(f"Converted create template request -> {create_template_request}")
 
-            res = save_template(create_template_request, user_email=ROBO_EMAIL)
+            res = save_template(create_template_request, user_email=user_email)
             logger.info(f"Save Template Response for Auto Save -> {res}")
             default_req = {
                 "name": create_template_request["name"],
                 "version": res['version'],
                 "default": True
             }
-            default_res = make_template_default(default_req, user_email=ROBO_EMAIL)
+            default_res = make_template_default(default_req, user_email=user_email)
             logger.info(f"Created default request -> {default_res}")
             return default_res
 

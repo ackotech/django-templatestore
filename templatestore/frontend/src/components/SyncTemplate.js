@@ -68,7 +68,7 @@ const transformAccounts = (vendorDetail, selectedVendor) => {
 };
 
 const transformResponseData = responseData => {
-  return responseData.map(item => ({
+  return responseData.filter(item => item['status'].toLowerCase() === 'enabled').map(item => ({
     value: item.name,
     label: item.name
   }));
@@ -107,7 +107,26 @@ const SyncTemplate = ({ stateVar }) => {
   }
 
   const postSyncTemplate = () => {
-    
+    axios.post(
+        `${backendSettings.TE_BASEPATH}/api/v1/template/${selectedVendor.value.toLowerCase()}/channel/${stateVar.type}/sync`,
+        
+        {
+            account_id: String(selectedAccountId.value),
+            name: String(selectedTemplateName.value)
+        }
+    )
+    .then(response => {
+        this.props.history.push(
+            backendSettings.TE_BASEPATH +
+                '/t/' +
+                response.data.name +
+                '/' +
+                response.data.version
+        );
+    })
+    .catch(error => {
+        console.error("Error saving auto fetch -> ", error);
+    });
   }
 
   // API call using useEffect based on accountId and vendor selection

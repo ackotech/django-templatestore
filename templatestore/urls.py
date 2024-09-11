@@ -3,7 +3,8 @@ from templatestore import views
 
 urlpatterns = [
     # apis
-    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template),
+    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_from_vendor),
+    path("api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_manual),
     path("internal/api/v1/vendor/<slug:vendor>/channel/<slug:channel>/", views.get_vendor_template),
     path("internal/api/v1/vendor", views.vendor_view),
     path("api/v1/template", views.post_template_view),

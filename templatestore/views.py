@@ -7,6 +7,8 @@ import json
 import re
 import logging
 import requests
+
+from templatestore.app_settings import ROBO_EMAIL
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig, TemplateServiceProvider
 from templatestore.template_utils import transform_gupshup_request, save_template, make_template_default, \
     save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template
@@ -624,7 +626,7 @@ def patch_attributes_view(request, name):
 
 
 @csrf_exempt
-def sync_template(request, vendor, channel):
+def sync_template_from_vendor(request, vendor, channel):
     if request.method != "POST":
         return HttpResponse(
             json.dumps({"message": "no method found"}),
@@ -657,7 +659,10 @@ def sync_template(request, vendor, channel):
         }
         """
         try:
-            response = transform_gupshup_request(request_body)
+            user_email = ROBO_EMAIL
+            if request.POST.get("email") is not None:
+                user_email = request.POST.get("email")
+            response = transform_gupshup_request(request_body, user_email)
             return JsonResponse(response, status=200)
         except Exception as e:
             logger.exception(e)
@@ -668,7 +673,7 @@ def sync_template(request, vendor, channel):
             )
     else:
         return HttpResponse(
-            json.dumps({"message": "no method found"}),
+            json.dumps({"message": "no channel vendor found"}),
             content_type="application/json",
             status=404,
         )
@@ -746,3 +751,33 @@ def get_vendor_template(request, vendor, channel):
         data = get_whatsapp_gupshup_template(template_detail)
 
     return JsonResponse(data, status=200)
+
+
+@csrf_exempt
+def sync_template_manual(request, vendor, channel):
+    if request.method != "POST":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        request_body = json.loads(request.body)
+        if 'account_id' not in request_body or 'name' not in request_body:
+            return JsonResponse({'message': "account_id or name not found"}, status=400)
+
+        data = {'vendor': vendor, 'channel': channel, 'data': [{
+            "message_template_name": request_body['name'],
+            "account": request_body['account_id']
+        }]}
+        user_email = ROBO_EMAIL
+        if request.POST.get("email") is not None:
+            user_email = request.POST.get("email")
+        res = transform_gupshup_request(data, user_email)
+        return JsonResponse(res, status=201)
+    else:
+        return HttpResponse(
+            json.dumps({"message": "no channel vendor found"}),
+            content_type="application/json",
+            status=404,
+        )
