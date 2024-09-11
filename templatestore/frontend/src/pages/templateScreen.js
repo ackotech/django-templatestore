@@ -1155,6 +1155,16 @@ class TemplateScreen extends Component {
         return (
             <div className="container ">
                 <div className={styles.teDetailPage}>
+                    {this.state.type == 'whatsapp' ? (<div className={styles.teTemplateHeader}>
+                        <h1>
+                            {this.state.editable ?
+                                'Auto Add New Template' :
+                                this.state.templateData.name}
+                        </h1>
+                    </div>) : ("")}
+                    <div>
+                    {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} />) : ('')}
+                    <br />
                     <div className={styles.teTemplateHeader}>
                         <h1>
                             {this.state.editable ?
@@ -1162,7 +1172,7 @@ class TemplateScreen extends Component {
                                 this.state.templateData.name}
                         </h1>
                     </div>
-                    <div>
+
                         {this.state.editable ? (
                             <input
                                 type="text"
@@ -1172,8 +1182,7 @@ class TemplateScreen extends Component {
                         ) : (
                             ''
                         )}
-                        {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} />) : ('')}
-                        <br />
+
                         
                         <div className={styles.teVersionWrapper}>
                             <label>Version : </label>

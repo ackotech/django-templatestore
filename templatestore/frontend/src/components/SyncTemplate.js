@@ -56,7 +56,7 @@ const customStyles = {
       ...provided,
       color: "#333"
     })
-  };
+};
 
 const transformAccounts = (vendorDetail, selectedVendor) => {
   return vendorDetail
@@ -132,12 +132,21 @@ const SyncTemplate = ({ stateVar }) => {
   return (
     <>
       {loader ? (
-        <FidgetSpinner />
+        <FidgetSpinner 
+            wrapperStyle={{ 
+                display: "flex", 
+                justifyContent: "center", 
+                alignItems: "center", 
+                height: "25vh",
+                width: "25vw"
+          }}
+        />
       ) : (
         <>
           <Select
             styles={customStyles}
             value={selectedVendor}
+            placeholder="Select the Template Vendor"
             options={transformVendors(stateVar.vendorDetail.data)}
             onChange={handleVendorChange}
           />
@@ -145,6 +154,7 @@ const SyncTemplate = ({ stateVar }) => {
             <Select
               styles={customStyles}
               value={selectedAccountId}
+              placeholder="Select the Account Id for Vendor"
               options={transformAccounts(
                 stateVar.vendorDetail.data,
                 selectedVendor?.value
@@ -155,6 +165,7 @@ const SyncTemplate = ({ stateVar }) => {
           {viewThirdOption && (
             <Select options={thirdDropdownOptions} 
                     value={selectedTemplateName} 
+                    placeholder="Select the Template Name"
                     onChange={handleTemplateChange}
                     styles={customStyles} />)}
           {selectedTemplateName && <button className={styles.waButton} onClick={postSyncTemplate}>Save Template</button>}
