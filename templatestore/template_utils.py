@@ -57,6 +57,7 @@ def transform_gupshup_request(data, user_email):
                 replaced_text = replace_placeholders(result['body'])
                 variable_count = len(matches)
             for i in range(1, variable_count+1):
+                # Gupshup variable assigns from 1 to n
                 create_template_request['sample_context_data'][variable_prefix + str(i)] = "sample"
 
             create_template_request['sub_templates'].append({
