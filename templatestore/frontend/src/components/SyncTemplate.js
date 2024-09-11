@@ -116,6 +116,7 @@ const SyncTemplate = ({ stateVar }) => {
         }
     )
     .then(response => {
+        // TODO: Check this 
         this.props.history.push(
             backendSettings.TE_BASEPATH +
                 '/t/' +

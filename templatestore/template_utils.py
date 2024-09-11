@@ -10,7 +10,7 @@ from templatestore import app_settings
 from templatestore import app_settings as ts_settings
 from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
-from templatestore.utils import base64encode
+from templatestore.utils import base64encode, replace_placeholders
 
 logger = logging.getLogger(__name__)
 
@@ -49,18 +49,20 @@ def transform_gupshup_request(data, user_email):
                 'sub_templates': [],
                 'sample_context_data': {}
             }
-
+            variable_prefix = "var"
             variable_count = 0
+            replaced_text = ""
             if "body" in result:
                 matches = re.findall(r"\{\{\d+}}", result['body'])
+                replaced_text = replace_placeholders(result['body'])
                 variable_count = len(matches)
             for i in range(1, variable_count+1):
-                create_template_request['sample_context_data'][str(i)] = "sample"
+                create_template_request['sample_context_data'][variable_prefix + str(i)] = "sample"
 
             create_template_request['sub_templates'].append({
                 'render_mode': "text",
                 'sub_type': "textpart",
-                'data': base64encode(result['body']) if "body" in result else ""
+                'data': base64encode(replaced_text) if "body" in result else ""
             })
             create_template_request['sub_templates'].append({
                 'render_mode': "text",

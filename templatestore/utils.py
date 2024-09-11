@@ -59,3 +59,13 @@ def generatePayload(templateTable, versionTable, data):
         i = i + 1
     return ans
 
+
+def replace_placeholders(text):
+    def replacement(match):
+        # Extract the number from {{number}}
+        number = match.group(1)
+        return f"{{{{var{number}}}}}"  # return {{var<number>}}
+
+    # Regular expression to find {{number}}
+    replaced_text = re.sub(r"\{\{(\d+)\}\}", replacement, text)
+    return replaced_text
