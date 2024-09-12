@@ -12,7 +12,10 @@ from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
 from templatestore.utils import base64encode, replace_placeholders
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.NOTSET)
+logger = logging.getLogger("template_utils")
 
 
 def transform_gupshup_request(data, user_email):
@@ -157,8 +160,8 @@ def get_whatsapp_gupshup_template(template_detail):
             params['password'] = credential['password']
             break
 
-    print("app_settings -> ", app_settings)
-    print("Calling Gupshup -> ", params)
+    logger.info("app_settings -> %s", app_settings)
+    logger.info("Calling Gupshup -> %s", params)
     response = requests.get(app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL, params=params)
     data = {}
     if response.status_code == 200:
@@ -172,7 +175,7 @@ def get_whatsapp_gupshup_template(template_detail):
 
 
 def save_template(data, user_email):
-    logging.info(f"Saving Template with data -> {data}")
+    logger.info(f"Saving Template with data -> {data}")
     required_fields = {
         "name",
         "type",
