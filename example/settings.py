@@ -164,4 +164,4 @@ TE_BASEPATH = "/"
 
 ROBO_EMAIL = "robo-central-growth@acko.tech"
 
-GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"
+# GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"
