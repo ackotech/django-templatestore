@@ -157,6 +157,8 @@ def get_whatsapp_gupshup_template(template_detail):
             params['password'] = credential['password']
             break
 
+    print("app_settings -> ", app_settings)
+    print("Calling Gupshup -> ", params)
     response = requests.get(app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL, params=params)
     data = {}
     if response.status_code == 200:
