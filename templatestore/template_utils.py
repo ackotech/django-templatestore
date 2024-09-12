@@ -140,6 +140,7 @@ def transform_gupshup_request(data, user_email):
             logger.info(f"Created default request -> {default_res}")
             return default_res
 
+
 def get_whatsapp_gupshup_template(template_detail):
     params = {
         'method': 'get_whatsapp_hsm',
@@ -156,7 +157,7 @@ def get_whatsapp_gupshup_template(template_detail):
             params['password'] = credential['password']
             break
 
-    response = requests.get(app_settings.GUPSHUP_WA_TEMPLATE_SYNC, params=params)
+    response = requests.get(app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL, params=params)
     data = {}
     if response.status_code == 200:
         data = response.json()
