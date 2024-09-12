@@ -160,8 +160,7 @@ def get_whatsapp_gupshup_template(template_detail):
             params['password'] = credential['password']
             break
 
-    logger.info("app_settings -> %s", app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL)
-    logger.info("app_settings -> %s", app_settings.TINY_URL)
+    logger.info("gupshup url -> %s", app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL)
     logger.info("Calling Gupshup -> %s", params)
     response = requests.get(app_settings.GUPSHUP_WA_TEMPLATE_SYNC_URL, params=params)
     data = {}
