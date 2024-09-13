@@ -81,7 +81,7 @@ def transform_gupshup_request(data, user_email):
 
             dynamic_url_button_count = 1
             # Get button details
-            if result["button_type"] != "NONE":
+            if 'buttons' in result:
                 buttons = {'buttons': []}
                 for button in result['buttons']:
                     if button['type'] == 'PHONE_NUMBER':
