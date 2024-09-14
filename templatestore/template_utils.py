@@ -8,7 +8,7 @@ import requests
 
 from templatestore import app_settings
 from templatestore import app_settings as ts_settings
-from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP
+from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
 from templatestore.utils import base64encode, replace_placeholders
 
@@ -16,7 +16,7 @@ from templatestore.utils import base64encode, replace_placeholders
 
 logging.basicConfig(level=logging.NOTSET)
 logger = logging.getLogger("template_utils")
-
+auto_sync_prefix = "auto_sync_"
 
 def transform_gupshup_request(data, user_email):
     if data['vendor'].upper() == "GUPSHUP" and data['channel'].upper() == "WHATSAPP":
@@ -128,7 +128,7 @@ def transform_gupshup_request(data, user_email):
                 })
 
             create_template_request['attributes'] = GUPSHUP_WA_CREDENTIAL_LOB_MAP[str(template_event['account'])]
-            create_template_request['version_alias'] = "auto_sync_" + str(int(time.time()))
+            create_template_request['version_alias'] = auto_sync_prefix + str(int(time.time()))
 
             logger.info(f"Converted create template request -> {create_template_request}")
 
@@ -275,6 +275,9 @@ def save_template(data, user_email):
         raise (
             Exception("Validation: sample_context_data field can not be empty")
         )
+
+    if user_email != ROBO_EMAIL and data.get("version_alias", "").startswith(auto_sync_prefix):
+        data['version_alias'] = ""
 
     if not re.match("(^[_a-zA-Z0-9 ]*$)", data.get("version_alias", "")):
         raise (

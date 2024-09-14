@@ -1157,9 +1157,7 @@ class TemplateScreen extends Component {
                 <div className={styles.teDetailPage}>
                     {this.state.type == 'whatsapp' ? (<div className={styles.teTemplateHeader}>
                         <h1>
-                            {this.state.editable ?
-                                'Auto Add New Template' :
-                                this.state.templateData.name}
+                            Auto Add New Template
                         </h1>
                     </div>) : ("")}
                     <div>

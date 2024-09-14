@@ -59,12 +59,23 @@ const customStyles = {
     })
 };
 
+const accountIdMap = {
+  "2000184968": "Acko UAT One Way (Most common)",
+  "2000184969": "Acko UAT Two Way",
+  "2000214144": "Acko Tech (Electronics)",
+  "2000231746": "Acko Life",
+  "2000238490": "Auto Garage",
+  "2000189615": "Acko Drive",
+  "2000184970": "Acko PROD One Way (Most common)",
+  "2000184971": "Acko PRDO Two Way",
+}
+
 const transformAccounts = (vendorDetail, selectedVendor) => {
   return vendorDetail
     .filter(v => v.vendor === selectedVendor)
     .map(v => ({
       value: v.account_id,
-      label: v.account_id
+      label: v.account_id + " " + accountIdMap[v.account_id]
     }));
 };
 
@@ -141,7 +152,6 @@ const SyncTemplate = ({ stateVar, history }) => {
         )
         .then(response => {
           const options = transformResponseData(response.data.data);
-          console.log("setThirdDropdownOptions ", options);
           setThirdDropdownOptions(options);
           setViewThirdOption(true);
           setLoader(false);
