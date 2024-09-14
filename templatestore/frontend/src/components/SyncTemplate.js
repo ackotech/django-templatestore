@@ -94,6 +94,7 @@ const SyncTemplate = ({ stateVar, history }) => {
   const [viewThirdOption, setViewThirdOption] = useState(false);
   const [selectedTemplateName, setSelectedTemplateName] = useState(null);
   const [loader, setLoader] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Ensure vendor details are available
   if (!stateVar.vendorDetail) return null;
@@ -119,6 +120,7 @@ const SyncTemplate = ({ stateVar, history }) => {
   }
 
   const postSyncTemplate = () => {
+    setLoader(true);
     axios.post(
         `${backendSettings.TE_BASEPATH}/api/v1/template/${selectedVendor.value.toLowerCase()}/channel/${stateVar.type}/sync`,
         
@@ -128,6 +130,7 @@ const SyncTemplate = ({ stateVar, history }) => {
         }
     )
     .then(response => {
+        setLoader(false);
         // TODO: Check this 
         history.push(
             backendSettings.TE_BASEPATH +
@@ -139,6 +142,7 @@ const SyncTemplate = ({ stateVar, history }) => {
     })
     .catch(error => {
         console.error("Error saving auto fetch -> ", error);
+        setLoader(false);
     });
   }
 
@@ -202,7 +206,13 @@ const SyncTemplate = ({ stateVar, history }) => {
                     placeholder="Select the Template Name"
                     onChange={handleTemplateChange}
                     styles={customStyles} />)}
-          {selectedTemplateName && <button className={styles.waButton} onClick={postSyncTemplate}>Save Template</button>}
+          {selectedTemplateName && 
+          <button className={styles.waButton} 
+                  onClick={postSyncTemplate}
+                  disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Save Template"}
+          </button>
+          }
         </>
       )}
     </>
