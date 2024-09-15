@@ -21,4 +21,4 @@ GUPSHUP_WA_CREDENTIAL_LOB_MAP = getattr(settings, "GUPSHUP_WA_CREDENTIAL_LOB_MAP
 SMS_CREDENTIAL_LOB_MAP = getattr(settings, "SMS_CREDENTIAL_LOB_MAP", {})
 ROBO_EMAIL = getattr(settings, "ROBO_EMAIL", "")
 
-AIRTEL_SMS_TEMPLATE_URL = "https://www.airtel.in/business/commercial-communication/dlttemplate/findByPEIDTTYPEPagination/"
+AIRTEL_SMS_TEMPLATE_URL = getattr(settings, "AIRTEL_SMS_TEMPLATE_URL", "https://www.airtel.in/business/commercial-communication/dlttemplate/findByPEIDTTYPEPagination/")
