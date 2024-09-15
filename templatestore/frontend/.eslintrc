@@ -25,6 +25,8 @@
       "object-curly-spacing": false,
       "padded-blocks": false,
       "no-unused-vars": false,
-      "quote-props": false
+      "quote-props": false,
+      "brace-style": false,
+      "no-undef": "warn"
    }
 }

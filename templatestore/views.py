@@ -14,7 +14,7 @@ from templatestore import app_settings as ts_settings
 from templatestore.app_settings import ROBO_EMAIL
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
 from templatestore.template_utils import save_template, make_template_default, \
-    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template, transform_and_save
+    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template, transform_and_save, get_airtel_sms_template
 from templatestore.utils import (
     base64decode,
     base64encode,
@@ -739,7 +739,8 @@ def get_vendor_template(request, vendor, channel):
     if not found_config:
         JsonResponse({"message": "vendor config not found"}, status=400)
 
-    if vendor.lower() == "gupshup":
+    data = {}
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
         template_detail = {
             'user_id': str(account_id)
         }
@@ -750,6 +751,15 @@ def get_vendor_template(request, vendor, channel):
         else:
             template_detail['limit'] = 10000
         data = get_whatsapp_gupshup_template(template_detail)
+
+    elif vendor.lower() == 'airtel' and channel.lower() == "sms":
+        template_detail = {
+            'peid': str(account_id),
+            'limit': "1000000"
+        }
+        if request.GET.get("limit") is not None:
+            template_detail['limit'] = request.GET.get("limit")
+        data = get_airtel_sms_template(template_detail)
 
     return JsonResponse(data, status=200)
 

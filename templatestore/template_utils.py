@@ -154,7 +154,8 @@ def transform_and_save(data, user_email):
         for template_event in event_list:
             template_detail = {
                 "peid": template_event['account_id'],
-                "name": template_event['name']
+                "name": template_event['name'],
+                "limit": "1000000"
             }
             result = get_airtel_sms_template(template_detail)
             result = result['templates'][0]
@@ -230,7 +231,7 @@ def get_airtel_sms_template(template_details):
         "ttype": "SMS",
         "peid": template_details['peid'],  # "1101556610000021991"
         "sts": "A",  # "A" -> active, "B" -> blocked
-        "pagesize": "1000000",
+        "pagesize": template_details['limit'],
         "bookmark": ""
     }
     headers = {
@@ -546,6 +547,7 @@ def get_vendor_info():
             "vendor": t.vendor,
             "channel": t.channel,
             "account_id": t.account_id,
-            "is_active": t.is_active
+            "is_active": t.is_active,
+            "metadata": t.metadata
         })
     return res

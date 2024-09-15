@@ -1155,13 +1155,13 @@ class TemplateScreen extends Component {
         return (
             <div className="container ">
                 <div className={styles.teDetailPage}>
-                    {this.state.type == 'whatsapp' ? (<div className={styles.teTemplateHeader}>
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<div className={styles.teTemplateHeader}>
                         <h1>
                             Auto Add New Template
                         </h1>
                     </div>) : ("")}
                     <div>
-                    {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
                     <br />
                     <div className={styles.teTemplateHeader}>
                         <h1>
