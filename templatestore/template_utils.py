@@ -356,7 +356,7 @@ def save_template(data, user_email):
             Exception("Validation: sample_context_data field can not be empty")
         )
 
-    if (user_email != ROBO_EMAIL or user_email.startswith("auto+")) and data.get("version_alias", "").startswith(auto_sync_prefix):
+    if (user_email != ROBO_EMAIL or not user_email.startswith("auto+")) and data.get("version_alias", "").startswith(auto_sync_prefix):
         data['version_alias'] = ""
 
     if not re.match("(^[_a-zA-Z0-9 ]*$)", data.get("version_alias", "")):
