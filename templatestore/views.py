@@ -1,24 +1,25 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-from datetime import datetime
 import json
-import re
 import logging
-import requests
+import re
+from datetime import datetime
 
+import requests
+from django.db import connection
+from django.db import transaction
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+
+from templatestore import app_settings as ts_settings
 from templatestore.app_settings import ROBO_EMAIL
-from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig, TemplateServiceProvider
-from templatestore.template_utils import transform_gupshup_request, save_template, make_template_default, \
-    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template
+from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
+from templatestore.template_utils import save_template, make_template_default, \
+    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template, transform_and_save
 from templatestore.utils import (
     base64decode,
     base64encode,
     generatePayload,
 )
-from templatestore import app_settings as ts_settings
-from django.db import connection
 
 logger = logging.getLogger(__name__)
 PDF_URL = ts_settings.WKPDFGEN_SERVICE_URL
@@ -662,7 +663,7 @@ def sync_template_from_vendor(request, vendor, channel):
             user_email = ROBO_EMAIL
             if request.POST.get("email") is not None:
                 user_email = request.POST.get("email")
-            response = transform_gupshup_request(request_body, user_email)
+            response = transform_and_save(request_body, user_email)
             return JsonResponse(response, status=200)
         except Exception as e:
             logger.exception(e)
@@ -761,23 +762,41 @@ def sync_template_manual(request, vendor, channel):
             content_type="application/json",
             status=404,
         )
+    user_email = ROBO_EMAIL
+    if request.POST.get("email") is not None:
+        user_email = request.POST.get("email")
+
+    request_body = json.loads(request.body)
+    if 'account_id' not in request_body or 'name' not in request_body:
+        return JsonResponse({'message': "account_id or name not found"}, status=400)
+
     if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
-        request_body = json.loads(request.body)
-        if 'account_id' not in request_body or 'name' not in request_body:
-            return JsonResponse({'message': "account_id or name not found"}, status=400)
 
         data = {'vendor': vendor, 'channel': channel, 'data': [{
             "message_template_name": request_body['name'],
             "account": request_body['account_id']
         }]}
-        user_email = ROBO_EMAIL
-        if request.POST.get("email") is not None:
-            user_email = request.POST.get("email")
-        res = transform_gupshup_request(data, user_email)
+
+        res = transform_and_save(data, user_email)
         return JsonResponse(res, status=201)
-    else:
-        return HttpResponse(
-            json.dumps({"message": "no channel vendor found"}),
-            content_type="application/json",
-            status=404,
-        )
+
+    elif vendor.lower() == "airtel" and channel.lower() == "sms":
+        '''{
+            "account_id": "1101556610000021991",
+            "name": "Send Me Quote-2",
+            "dlt_message_sender": "gupshup",
+            "message_sender_account_id": "2000191675"
+        }
+        '''
+        if 'dlt_message_sender' not in request_body or 'message_sender_account_id' not in request_body:
+            return JsonResponse({'message': "dlt_message_sender or message_sender_account_id not found"}, status=400)
+
+        data = {'vendor': vendor, 'channel': channel, 'data': [request_body]}
+        res = transform_and_save(data, user_email)
+        return JsonResponse(res, status=201)
+
+    return HttpResponse(
+        json.dumps({"message": "no channel vendor found"}),
+        content_type="application/json",
+        status=404,
+    )

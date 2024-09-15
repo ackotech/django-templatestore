@@ -8,9 +8,9 @@ import requests
 
 from templatestore import app_settings
 from templatestore import app_settings as ts_settings
-from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL
+from templatestore.app_settings import GUPSHUP_WA_CREDENTIAL_LOB_MAP, ROBO_EMAIL, SMS_CREDENTIAL_LOB_MAP
 from templatestore.models import TemplateConfig, Template, TemplateVersion, SubTemplate, TemplateServiceProvider
-from templatestore.utils import base64encode, replace_placeholders
+from templatestore.utils import base64encode, replace_placeholders, replace_sms_vars_with_placeholders
 
 # logger = logging.getLogger(__name__)
 
@@ -18,7 +18,19 @@ logging.basicConfig(level=logging.NOTSET)
 logger = logging.getLogger("template_utils")
 auto_sync_prefix = "auto_sync_"
 
-def transform_gupshup_request(data, user_email):
+
+def transform_and_save(data, user_email):
+    create_template_request = {
+        'name': "",
+        'type': 'whatsapp',
+        'version_alias': '',
+        'tiny_url': [],
+        'sub_templates': [],
+        'sample_context_data': {}
+    }
+    variable_prefix = "var"
+    variable_count = 0
+
     if data['vendor'].upper() == "GUPSHUP" and data['channel'].upper() == "WHATSAPP":
         event_list = data['data']
         for template_event in event_list:
@@ -44,16 +56,9 @@ def transform_gupshup_request(data, user_email):
             logger.info(f"Got template details -> {result}")
             result = result['data'][0]
             # Convert request
-            create_template_request = {
-                'name': result['name'],
-                'type': 'whatsapp',
-                'version_alias': '',
-                'tiny_url': [],
-                'sub_templates': [],
-                'sample_context_data': {}
-            }
-            variable_prefix = "var"
-            variable_count = 0
+            create_template_request['name'] = result['name']
+            create_template_request['type'] = "whatsapp"
+
             replaced_text = ""
             if "body" in result:
                 matches = re.findall(r"\{\{\d+}}", result['body'])
@@ -61,7 +66,7 @@ def transform_gupshup_request(data, user_email):
                 variable_count = len(matches)
             for i in range(1, variable_count+1):
                 # Gupshup variable assigns from 1 to n
-                create_template_request['sample_context_data'][variable_prefix + str(i)] = "sample"
+                create_template_request['sample_context_data'][variable_prefix + str(i)] = variable_prefix + str(i)
 
             create_template_request['sub_templates'].append({
                 'render_mode': "text",
@@ -127,23 +132,68 @@ def transform_gupshup_request(data, user_email):
                     'data': base64encode(json.dumps(buttons))
                 })
 
+            # TODO: If version already exist handling
             create_template_request['attributes'] = GUPSHUP_WA_CREDENTIAL_LOB_MAP[str(template_event['account'])]
-            create_template_request['version_alias'] = auto_sync_prefix + str(int(time.time()))
 
-            logger.info(f"Converted create template request -> {create_template_request}")
-
-            res = save_template(create_template_request, user_email=user_email)
-            logger.info(f"Save Template Response for Auto Save -> {res}")
-            default_req = {
-                "name": create_template_request["name"],
-                "version": res['version'],
-                "default": True
+    elif data['vendor'].lower() == 'airtel' and data['channel'].lower() == 'sms':
+        '''
+        {
+            "vendor": "airtel",
+            "channel": "sms",
+            "data": [
+                {
+                    "account_id": "1101556610000021991",
+                    "name": "Send Me Quote-2",
+                    "dlt_message_sender": "gupshup",
+                    "message_sender_account_id": "2000191675"
+                }
+            ]
+        }
+        '''
+        event_list = data['data']
+        for template_event in event_list:
+            template_detail = {
+                "peid": template_event['account_id'],
+                "name": template_event['name']
             }
-            default_res = make_template_default(default_req, user_email=user_email)
-            logger.info(f"Created default request -> {default_res}")
-            return default_res
+            result = get_airtel_sms_template(template_detail)
+            result = result['templates'][0]
+            create_template_request['name'] = result['tname']
+            create_template_request['type'] = "sms"
 
+            replaced_text = ""
+            variable_count = int(result['vars'])
+            replaced_text = replace_sms_vars_with_placeholders(result['tcont'])
+            for i in range(1, variable_count+1):
+                # variable assigns from 1 to n
+                create_template_request['sample_context_data'][variable_prefix + str(i)] = variable_prefix + str(i)
 
+            create_template_request['sub_templates'].append({
+                'render_mode': "text",
+                'sub_type': "textpart",
+                'data': base64encode(replaced_text)
+            })
+
+            # TODO: If version already exist handling
+            create_template_request['attributes'] = \
+                SMS_CREDENTIAL_LOB_MAP[template_event["dlt_message_sender"]][template_event['message_sender_account_id']]
+            # Updating mask
+            create_template_request['attributes']['mask'] = result['cli'][0]
+
+    create_template_request['version_alias'] = auto_sync_prefix + str(int(time.time()))
+
+    logger.info(f"Converted create template request -> {create_template_request}")
+
+    res = save_template(create_template_request, user_email=user_email)
+    logger.info(f"Save Template Response for Auto Save -> {res}")
+    default_req = {
+        "name": create_template_request["name"],
+        "version": res['version'],
+        "default": True
+    }
+    default_res = make_template_default(default_req, user_email=user_email)
+    logger.info(f"Created default request -> {default_res}")
+    return default_res
 def get_whatsapp_gupshup_template(template_detail):
     params = {
         'method': 'get_whatsapp_hsm',
@@ -174,6 +224,35 @@ def get_whatsapp_gupshup_template(template_detail):
     return data
 
 
+def get_airtel_sms_template(template_details):
+    logger.info("Getting airtel Active templates")
+    payload = {
+        "ttype": "SMS",
+        "peid": template_details['peid'],  # "1101556610000021991"
+        "sts": "A",  # "A" -> active, "B" -> blocked
+        "pagesize": "1000000",
+        "bookmark": ""
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.request("POST", app_settings.AIRTEL_SMS_TEMPLATE_URL, headers=headers, json=payload)
+    data = {}
+    if response.status_code != 200:
+        logger.error(f"Error fetching data for template {payload}")
+        return data
+
+    data = response.json()
+    logger.info(f"Successful fetch template %s", data)
+    if 'name' in template_details:
+        result = filter(lambda template: template["tname"] == template_details['name'], data['templates'])
+        data['templates'] = list(result)
+
+    logger.info(f"Airtel SMS Details -> %s", data)
+    return data
+
+
 def save_template(data, user_email):
     logger.info(f"Saving Template with data -> {data}")
     required_fields = {
@@ -190,7 +269,7 @@ def save_template(data, user_email):
             )
         )
 
-    if not re.match("(^[a-zA-Z]+[a-zA-Z0-9_]*$)", data["name"]):
+    if not re.match("(^[a-zA-Z]+[a-zA-Z0-9_\\- ]*$)", data["name"]):
         raise (
             Exception(
                 "Validation: `"
