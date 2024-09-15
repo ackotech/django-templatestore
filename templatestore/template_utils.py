@@ -270,7 +270,7 @@ def save_template(data, user_email):
             )
         )
 
-    if not re.match("(^[a-zA-Z]+[a-zA-Z0-9_\\- ]*$)", data["name"]):
+    if not re.match("(^[a-zA-Z0-9]+[a-zA-Z0-9_\\- ]*$)", data["name"]):
         raise (
             Exception(
                 "Validation: `"

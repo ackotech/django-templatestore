@@ -642,7 +642,7 @@ class TemplateScreen extends Component {
 
     postTemplate(name, type, contextData, attributes) {
         try {
-            var re = new RegExp('^[a-zA-Z]+[a-zA-Z0-9_\\-\\s]*$');
+            var re = new RegExp('^[a-zA-Z0-9]+[a-zA-Z0-9_\\-\\s]*$');
             if (!re.test(name)) {
                 throw new Error(
                     'Validation: `' + name + '` is not a valid template name'
