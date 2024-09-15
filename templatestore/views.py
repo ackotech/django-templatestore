@@ -775,6 +775,7 @@ def sync_template_manual(request, vendor, channel):
     user_email = ROBO_EMAIL
     if request.POST.get("email") is not None:
         user_email = request.POST.get("email")
+        user_email = "auto+" + user_email
 
     request_body = json.loads(request.body)
     if 'account_id' not in request_body or 'name' not in request_body:
