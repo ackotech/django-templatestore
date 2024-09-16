@@ -22,3 +22,4 @@ SMS_CREDENTIAL_LOB_MAP = getattr(settings, "SMS_CREDENTIAL_LOB_MAP", {})
 ROBO_EMAIL = getattr(settings, "ROBO_EMAIL", "")
 
 AIRTEL_SMS_TEMPLATE_URL = getattr(settings, "AIRTEL_SMS_TEMPLATE_URL", "https://www.airtel.in/business/commercial-communication/dlttemplate/findByPEIDTTYPEPagination/")
+TEMPLATE_SYNC_SQS = getattr(settings, "TEMPLATE_SYNC_SQS", "https://sqs.ap-south-1.amazonaws.com/663498825379/central-growth-template-update-sync")

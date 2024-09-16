@@ -3,10 +3,14 @@ from templatestore import views
 
 urlpatterns = [
     # apis
-    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_from_vendor),
+    # Receives template update events from lambda and saves
+    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/save", views.sync_template_from_vendor),
+    # Receives all incoming template update events from vendor and push to SQS
+    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.process_vendor_template_updates),
+
     path("api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_manual),
-    path("internal/api/v1/vendor/<slug:vendor>/channel/<slug:channel>/", views.get_vendor_template),
-    path("internal/api/v1/vendor", views.vendor_view),
+    path("api/v1/vendor/<slug:vendor>/channel/<slug:channel>/", views.get_vendor_template),
+    path("api/v1/vendor", views.vendor_view),
     path("api/v1/template", views.post_template_view),
     path("render_pdf", views.render_pdf),
     path("api/v1/render", views.render_template_view),

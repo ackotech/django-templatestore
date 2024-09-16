@@ -253,7 +253,7 @@ const SyncTemplate = ({ stateVar, history }) => {
       setLoader(true);
       axios
         .get(
-          `${backendSettings.TE_BASEPATH}/internal/api/v1/vendor/${selectedVendor.value}/channel/${stateVar.type}/?account_id=${selectedAccountId.value}`
+          `${backendSettings.TE_BASEPATH}/api/v1/vendor/${selectedVendor.value}/channel/${stateVar.type}/?account_id=${selectedAccountId.value}`
         )
         .then(response => {
           let options;

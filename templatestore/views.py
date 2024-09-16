@@ -10,7 +10,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from templatestore import app_settings as ts_settings
+from templatestore import app_settings as ts_settings, sqs_utils
 from templatestore.app_settings import ROBO_EMAIL
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
 from templatestore.template_utils import save_template, make_template_default, \
@@ -782,7 +782,12 @@ def sync_template_manual(request, vendor, channel):
         return JsonResponse({'message': "account_id or name not found"}, status=400)
 
     if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
-
+        '''
+        {
+            "account_id": "2000XXXXX",
+            "name": "sample"
+        }
+        '''
         data = {'vendor': vendor, 'channel': channel, 'data': [{
             "message_template_name": request_body['name'],
             "account": request_body['account_id']
@@ -808,6 +813,49 @@ def sync_template_manual(request, vendor, channel):
 
     return HttpResponse(
         json.dumps({"message": "no channel vendor found"}),
+        content_type="application/json",
+        status=404,
+    )
+
+
+@csrf_exempt
+def process_vendor_template_updates(request, vendor, channel):
+    if request.method != "POST":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        request_body = json.loads(request.body)
+        '''
+        [
+            {
+                "event_id": 4726775420256625000,
+                "field": "message_template_status_update",
+                "event": "ENABLED",
+                "message_template_name": "sample_template",
+                "message_template_language": "en",
+                "message_template_id": 9999999,
+                "message_template_type": "TEXT",
+                "account": "2000XXXXXX",
+                "reason": "NONE",
+                "time": 1662987166
+            }
+        ]
+        '''
+        data = {
+            "vendor": vendor,
+            "channel": channel,
+            "data": request_body
+        }
+        res = sqs_utils.send_message(data)
+
+        return JsonResponse(res, status=200)
+
+    return HttpResponse(
+        json.dumps({"message": "vendor or channel not found"}),
         content_type="application/json",
         status=404,
     )

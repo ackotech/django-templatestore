@@ -195,6 +195,8 @@ def transform_and_save(data, user_email):
     default_res = make_template_default(default_req, user_email=user_email)
     logger.info(f"Created default request -> {default_res}")
     return default_res
+
+
 def get_whatsapp_gupshup_template(template_detail):
     params = {
         'method': 'get_whatsapp_hsm',
@@ -522,6 +524,7 @@ def make_template_default(data, user_email):
         "attributes": tmp.attributes,
     }
     return template_data
+
 
 def save_vendor_info(data):
     tmp = TemplateServiceProvider.objects.create(

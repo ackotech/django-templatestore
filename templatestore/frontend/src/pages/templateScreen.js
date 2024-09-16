@@ -183,7 +183,7 @@ class TemplateScreen extends Component {
             });
         
         axios
-            .get(backendSettings.TE_BASEPATH + '/internal/api/v1/vendor')
+            .get(backendSettings.TE_BASEPATH + '/api/v1/vendor')
             .then(response => {
                 this.setState({
                     vendorDetail: response.data
