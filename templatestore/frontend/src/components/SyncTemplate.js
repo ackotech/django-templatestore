@@ -14,7 +14,6 @@ const transformVendors = (vendorDetail, channel) => {
       uniqueVendors[v.vendor] = {
         value: v.vendor,
         label: v.vendor,
-        account_id: v.account_id
       };
     }
   });
@@ -68,6 +67,7 @@ const accountIdMap = {
   "2000189615": "Acko Drive",
   "2000184970": "Acko PROD One Way (Most common)",
   "2000184971": "Acko PRDO Two Way",
+  "1101556610000021991": "Only Account"
 }
 
 const transformAccounts = (vendorDetail, selectedVendor) => {
@@ -86,14 +86,31 @@ const transformResponseData = responseData => {
   }));
 };
 
+const transformSmsData = reponseData => {
+  return reponseData['templates'].map(item => ({
+    value: item['tname'],
+    label: item['tname']
+  }));
+};
+
 const SyncTemplate = ({ stateVar, history }) => {
+  const [selectedChannel, setSelectedChannel] = useState(stateVar.type);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [viewAccountIdOption, setViewAccountIdOption] = useState(false);
   const [thirdDropdownOptions, setThirdDropdownOptions] = useState([]);
   const [viewThirdOption, setViewThirdOption] = useState(false);
+  const [viewMesageSenderOption, setViewMesageSenderOption] = useState(false);
   const [selectedTemplateName, setSelectedTemplateName] = useState(null);
+  const [selectedMessageSender, setSelectedMesageSender] = useState(null);
+
+  const [viewMesageSenderAccountIdOption, setViewMesageSenderAccountIdOption] = useState(false);
+  const [messageSenderAccountIdDropdownOptions, setMessageSenderAccountIdDropdownOptions] = useState([]);
+  const [selectedMessageSenderAccountId, setSelectedMessageSenderAccountId] = useState(null);
+
+  const [messageSenderDropdownOptions, setMessageSenderDropdownOptions] = useState([]);
   const [loader, setLoader] = useState(false);
+  const [viewButton, setViewButton] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Ensure vendor details are available
@@ -105,8 +122,10 @@ const SyncTemplate = ({ stateVar, history }) => {
     setViewAccountIdOption(true);
     setViewThirdOption(false);
     setThirdDropdownOptions([]);
+    setViewMesageSenderOption(false);
     setSelectedAccountId('');
     setSelectedTemplateName('');
+    setIsSubmitting(false);
   };
 
   // Handle account change
@@ -115,21 +134,90 @@ const SyncTemplate = ({ stateVar, history }) => {
     setSelectedTemplateName('');
   };
 
+  const messageSenderOptionFn = () => {
+    let vendorDetails = stateVar.vendorDetail.data
+    if (!vendorDetails) return [];
+    let smsDetails = [];
+    vendorDetails.forEach(v => {
+      if (v.vendor.toLowerCase() === selectedVendor.value.toLowerCase() && v.channel.toLowerCase() == stateVar.type.toLowerCase()) {
+        smsDetails = v.metadata.sender_details
+      }
+    });
+    
+    let senderAccountProvider = new Set();
+    smsDetails.forEach(item => {
+      senderAccountProvider.add(item.dlt_message_sender)
+    })
+    setMessageSenderDropdownOptions(Array.from(senderAccountProvider).map(item => ({
+      "label": item,
+      "value": item
+    })));
+  }
+
+  const messageSenderAccountIdOptionsFn = (selectedOption) => {
+    let vendorDetails = stateVar.vendorDetail.data
+    if (!vendorDetails) return [];
+    let smsDetails = [];
+    vendorDetails.forEach(v => {
+      if (v.vendor.toLowerCase() === selectedVendor.value.toLowerCase() && v.channel.toLowerCase() == stateVar.type.toLowerCase()) {
+        smsDetails = v.metadata.sender_details
+      }
+    });
+
+    setMessageSenderAccountIdDropdownOptions(smsDetails.filter(item => item.dlt_message_sender === selectedOption.value).map(item => ({
+      "label": item.id + " " + item.message_sender_account_id,
+      "value": item.message_sender_account_id
+    })));
+  }
+
   const handleTemplateChange = selectedOption => {
     setSelectedTemplateName(selectedOption)
+    if (stateVar.type == 'whatsapp') {
+      setViewButton(true);
+    }
+    if (stateVar.type == 'sms') {
+      messageSenderOptionFn();
+      setViewMesageSenderOption(true);
+    }
+  }
+
+  const handleMessageSenderChange = selectedOption => {
+    setSelectedMesageSender(selectedOption);
+    if (stateVar.type == 'sms') {
+      setViewMesageSenderAccountIdOption(true);
+      messageSenderAccountIdOptionsFn(selectedOption);
+    }
+  }
+
+  const handleMessageSenderAccountIdChange = selectedOption => {
+    setSelectedMessageSenderAccountId(selectedOption);
+    setViewButton(true);
   }
 
   const postSyncTemplate = () => {
+    setIsSubmitting(true);
     setLoader(true);
+    let req = {}
+    if (stateVar.type.toLowerCase() === 'whatsapp') {
+      req = {
+          account_id: String(selectedAccountId.value),
+          name: String(selectedTemplateName.value)
+      }
+    }
+    else if (stateVar.type.toLowerCase() === 'sms') {
+        req = {
+          account_id: String(selectedAccountId.value),
+          name: String(selectedTemplateName.value),
+          dlt_message_sender: selectedMessageSender.value,
+          message_sender_account_id: selectedMessageSenderAccountId.value
+      }
+    }
     axios.post(
         `${backendSettings.TE_BASEPATH}/api/v1/template/${selectedVendor.value.toLowerCase()}/channel/${stateVar.type}/sync`,
-        
-        {
-            account_id: String(selectedAccountId.value),
-            name: String(selectedTemplateName.value)
-        }
+        req
     )
     .then(response => {
+        setIsSubmitting(false);
         setLoader(false);
         // TODO: Check this 
         history.push(
@@ -142,20 +230,39 @@ const SyncTemplate = ({ stateVar, history }) => {
     })
     .catch(error => {
         console.error("Error saving auto fetch -> ", error);
+        setIsSubmitting(false);
         setLoader(false);
     });
   }
 
   // API call using useEffect based on accountId and vendor selection
   useEffect(() => {
-    if (selectedAccountId && selectedVendor && stateVar.type) {
+    if (selectedChannel !== stateVar.type) {
+      setSelectedVendor('');
+      setSelectedAccountId('');
+      setSelectedTemplateName("");
+      setSelectedMesageSender('');
+      setSelectedMessageSenderAccountId('');
+      setViewAccountIdOption(false);
+      setViewThirdOption(false);
+      setViewMesageSenderOption(false);
+      setViewMesageSenderAccountIdOption(false);
+      setSelectedChannel(stateVar.type);
+    }
+    else if (selectedAccountId && selectedVendor && stateVar.type) {
       setLoader(true);
       axios
         .get(
-          `${backendSettings.TE_BASEPATH}/internal/api/v1/vendor/${selectedVendor.value}/channel/${stateVar.type}/?account_id=${selectedAccountId.value}`
+          `${backendSettings.TE_BASEPATH}/api/v1/vendor/${selectedVendor.value}/channel/${stateVar.type}/?account_id=${selectedAccountId.value}`
         )
         .then(response => {
-          const options = transformResponseData(response.data.data);
+          let options;
+          if (stateVar.type.toLowerCase() == "whatsapp") {
+            options = transformResponseData(response.data.data);
+          }
+          else if (stateVar.type.toLowerCase() == "sms") {
+            options = transformSmsData(response.data);
+          }
           setThirdDropdownOptions(options);
           setViewThirdOption(true);
           setLoader(false);
@@ -206,7 +313,24 @@ const SyncTemplate = ({ stateVar, history }) => {
                     placeholder="Select the Template Name"
                     onChange={handleTemplateChange}
                     styles={customStyles} />)}
-          {selectedTemplateName && 
+          
+          
+          {viewMesageSenderOption && (
+            <Select options={messageSenderDropdownOptions} 
+                    value={selectedMessageSender} 
+                    placeholder="Select the Message Sender Provider"
+                    onChange={handleMessageSenderChange}
+                    styles={customStyles} />)}
+          
+          {viewMesageSenderAccountIdOption && (
+            <Select options={messageSenderAccountIdDropdownOptions} 
+                    value={selectedMessageSenderAccountId} 
+                    placeholder="Select the Message Sender Account Id"
+                    onChange={handleMessageSenderAccountIdChange}
+                    styles={customStyles} />)}
+          
+          
+          {viewButton && 
           <button className={styles.waButton} 
                   onClick={postSyncTemplate}
                   disabled={isSubmitting}>

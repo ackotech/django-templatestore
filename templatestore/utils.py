@@ -69,3 +69,11 @@ def replace_placeholders(text):
     # Regular expression to find {{number}}
     replaced_text = re.sub(r"\{\{(\d+)\}\}", replacement, text)
     return replaced_text
+
+
+def replace_sms_vars_with_placeholders(input_string):
+    count = 1
+    while '{#var#}' in input_string:
+        input_string = input_string.replace('{#var#}', f'{{{{var{count}}}}}', 1)
+        count += 1
+    return input_string

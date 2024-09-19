@@ -81,6 +81,8 @@ DATABASES = {
     }
 }
 
+
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -156,6 +158,15 @@ GUPSHUP_WA_CREDENTIAL_LOB_MAP = {
         "lob": "Central",
         "journey": "auto_sync",
         "wa_mode": "one_way"
+    }
+}
+
+SMS_CREDENTIAL_LOB_MAP = {
+    "gupshup": {
+        "2000191675": {
+            "lob": "Central",
+            "journey": "auto_sync"
+        }
     }
 }
 

@@ -109,6 +109,7 @@ class TemplateServiceProvider(models.Model):
     vendor = models.CharField(max_length=1000)
     channel = models.CharField(max_length=1000)
     account_id = models.CharField(max_length=1000)
+    metadata = JSONField(default=dict)
     is_active = models.BooleanField(default=True, blank=False)
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)

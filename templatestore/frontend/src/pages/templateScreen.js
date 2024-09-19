@@ -183,7 +183,7 @@ class TemplateScreen extends Component {
             });
         
         axios
-            .get(backendSettings.TE_BASEPATH + '/internal/api/v1/vendor')
+            .get(backendSettings.TE_BASEPATH + '/api/v1/vendor')
             .then(response => {
                 this.setState({
                     vendorDetail: response.data
@@ -642,7 +642,7 @@ class TemplateScreen extends Component {
 
     postTemplate(name, type, contextData, attributes) {
         try {
-            var re = new RegExp('^[a-zA-Z]+[a-zA-Z0-9_]*$');
+            var re = new RegExp('^[a-zA-Z0-9]+[a-zA-Z0-9_\\-\\s]*$');
             if (!re.test(name)) {
                 throw new Error(
                     'Validation: `' + name + '` is not a valid template name'
@@ -1155,13 +1155,13 @@ class TemplateScreen extends Component {
         return (
             <div className="container ">
                 <div className={styles.teDetailPage}>
-                    {this.state.type == 'whatsapp' ? (<div className={styles.teTemplateHeader}>
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<div className={styles.teTemplateHeader}>
                         <h1>
                             Auto Add New Template
                         </h1>
                     </div>) : ("")}
                     <div>
-                    {this.state.type == 'whatsapp' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
                     <br />
                     <div className={styles.teTemplateHeader}>
                         <h1>

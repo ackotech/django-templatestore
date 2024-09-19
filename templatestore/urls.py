@@ -3,10 +3,14 @@ from templatestore import views
 
 urlpatterns = [
     # apis
-    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_from_vendor),
+    # Receives template update events from lambda and saves
+    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/save", views.sync_template_from_vendor),
+    # Receives all incoming template update events from vendor and push to SQS
+    path("internal/api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.process_vendor_template_updates),
+
     path("api/v1/template/<slug:vendor>/channel/<slug:channel>/sync", views.sync_template_manual),
-    path("internal/api/v1/vendor/<slug:vendor>/channel/<slug:channel>/", views.get_vendor_template),
-    path("internal/api/v1/vendor", views.vendor_view),
+    path("api/v1/vendor/<slug:vendor>/channel/<slug:channel>/", views.get_vendor_template),
+    path("api/v1/vendor", views.vendor_view),
     path("api/v1/template", views.post_template_view),
     path("render_pdf", views.render_pdf),
     path("api/v1/render", views.render_template_view),
@@ -14,25 +18,26 @@ urlpatterns = [
     path("api/v2/templates", views.get_templates_view_v2),
     path("api/v1/tiny_url", views.save_tiny_url),
     path("internal/api/v1/template", views.post_template_view),
-    re_path("api/v1/tiny_url/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/(?P<version>\d+\.\d+)$", views.get_tiny_url),
+    re_path("api/v1/tiny_url/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/(?P<version>\d+\.\d+)$", views.get_tiny_url),
     re_path(
-        "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/versions$",
+        "api/v1/template/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/versions$",
         views.get_template_versions_view,
     ),
     re_path(
-        "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/render",
+        "api/v1/template/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/render",
         views.get_render_template_view,
     ),
     re_path(
-        "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/(?P<version>\d+\.\d+)$",
+        # "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/(?P<version>\d+\.\d+)$",
+        "api/v1/template/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/(?P<version>\d+\.\d+)$",
         views.get_template_details_view,
     ),
     re_path(
-        "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/(?P<version>\d+\.\d+)/render",
+        "api/v1/template/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/(?P<version>\d+\.\d+)/render",
         views.get_render_template_view,
     ),
     re_path(
-        "api/v1/template/(?P<name>[a-zA-Z]+[a-zA-Z0-9_]*)/attributes",
+        "api/v1/template/(?P<name>[a-zA-Z0-9]+[a-zA-Z0-9_\-\s]+)/attributes",
         views.patch_attributes_view,
     ),
     path("api/v1/config", views.get_config_view),
