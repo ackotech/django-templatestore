@@ -1,20 +1,25 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-from datetime import datetime
 import json
-import re
 import logging
+import re
+from datetime import datetime
+
 import requests
+from django.db import connection
+from django.db import transaction
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+
+from templatestore import app_settings as ts_settings, sqs_utils
+from templatestore.app_settings import ROBO_EMAIL
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
+from templatestore.template_utils import save_template, make_template_default, \
+    save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template, transform_and_save, get_airtel_sms_template
 from templatestore.utils import (
     base64decode,
     base64encode,
     generatePayload,
 )
-from templatestore import app_settings as ts_settings
-from django.db import connection
 
 logger = logging.getLogger(__name__)
 PDF_URL = ts_settings.WKPDFGEN_SERVICE_URL
@@ -202,220 +207,9 @@ def post_template_view(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-
-            required_fields = {
-                "name",
-                "type",
-                "sub_templates",
-                "sample_context_data",
-            }
-            missing_fields = required_fields.difference(set(data.keys()))
-            if len(missing_fields):
-                raise (
-                    Exception(
-                        "Validation: missing fields `" + str(missing_fields) + "`"
-                    )
-                )
-
-            if not re.match("(^[a-zA-Z]+[a-zA-Z0-9_]*$)", data["name"]):
-                raise (
-                    Exception(
-                        "Validation: `"
-                        + data["name"]
-                        + "` is not a valid template name"
-                    )
-                )
-
-            invalid_data = set()
-            empty_data = set()
-
-            for sub_template in data["sub_templates"]:
-                if not re.match(
-                    "(^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$)",
-                    sub_template["data"],
-                ):
-                    invalid_data.add(sub_template["sub_type"])
-
-                if not sub_template["data"]:
-                    empty_data.add(sub_template["sub_type"])
-
-            if len(invalid_data):
-                raise (
-                    Exception(
-                        "Validation: `"
-                        + str(invalid_data)
-                        + "` data is not base64 encoded"
-                    )
-                )
-
-            cfgs = TemplateConfig.objects.filter(type=data["type"])
-            #print(cfgs)
-            if not len(cfgs):
-                raise (
-                    Exception("Validation: `" + data["type"] + "` is not a valid type")
-                )
-
-            sub_types = {cfg.sub_type: cfg for cfg in cfgs}
-            #print(sub_types)
-            if len(empty_data) == len(sub_types):
-                raise (
-                    Exception(
-                        "Validation: Atleast one of the sub_types `"
-                        + str(empty_data)
-                        + "` must be non empty"
-                    )
-                )
-            invalid_subtypes = set(
-                [s["sub_type"] for s in data["sub_templates"]]
-            ).difference(set(sub_types.keys()))
-            if len(invalid_subtypes):
-                raise (
-                    Exception(
-                        "Validation: invalid subtypes `"
-                        + str(invalid_subtypes)
-                        + "` for type `"
-                        + data["type"]
-                        + "`"
-                    )
-                )
-
-            diff_keys = set(sub_types.keys()).difference(
-                set([s["sub_type"] for s in data["sub_templates"]])
-            )
-            if len(diff_keys):
-                for sub_type in diff_keys:
-                    optional_field = TemplateConfig.objects.filter(sub_type=sub_type).values()[0]['optional']
-                    print("@@@@@",optional_field)
-                    # optional = obj.values('optional')
-                    if not optional_field:
-                        raise (
-                            Exception(
-                                "Validation: missing `"
-                                + str(diff_keys)
-                                + "` for type `"
-                                + data["type"]
-                                + "`"
-                            )
-                        )
-
-            if not len(data["sample_context_data"]):
-                raise (
-                    Exception("Validation: sample_context_data field can not be empty")
-                )
-
-            if not re.match("(^[a-zA-Z0-9 ]*$)", data.get("version_alias", "")):
-                raise (
-                    Exception(
-                        "Validation: version_alias must contain only alphanumeric and space characters"
-                    )
-                )
-
-            templates = Template.objects.filter(name=data["name"])
-            if not len(templates):
-                if "attributes" not in data:
-                    raise (Exception("Validation: missing field `attributes`"))
-
-                if not len(data["attributes"]):
-                    raise (Exception("Validation: attributes field can not be empty"))
-
-                mandatory_attributes = {
-                    **cfgs[0].attributes,
-                    **ts_settings.TE_TEMPLATE_ATTRIBUTES,
-                }
-
-                missing_mandatory_attributes = set(
-                    mandatory_attributes.keys()
-                ).difference(set(data["attributes"].keys()))
-
-                if len(missing_mandatory_attributes):
-                    raise (
-                        Exception(
-                            "Validation: missing mandatory attributes `"
-                            + str(missing_mandatory_attributes)
-                            + "`"
-                        )
-                    )
-
-                invalid_valued_attributes = set(
-                    key
-                    for key in mandatory_attributes.keys()
-                    if "allowed_values" in mandatory_attributes[key]
-                    and data["attributes"][key]
-                    not in mandatory_attributes[key]["allowed_values"]
-                )
-
-                if len(invalid_valued_attributes):
-                    raise (
-                        Exception(
-                            "Validation: invalid values for the attributes `"
-                            + str(invalid_valued_attributes)
-                            + "`"
-                        )
-                    )
-
-                tmp = Template.objects.create(
-                    name=data["name"],
-                    attributes=data["attributes"],
-                    type=data["type"],
-                    user_email=request.POST.get("email"),
-                )
-                tmp.save()
-
-                version = "0.1"
-                template = tmp
-
-            else:
-                if data["type"] != templates[0].type:
-                    raise (
-                        Exception(
-                            "Validation: Template with name `"
-                            + data["name"]
-                            + "` already exists with type `"
-                            + templates[0].type
-                            + "`"
-                        )
-                    )
-
-                template = templates[0]  # only one template should exist
-                max_version = TemplateVersion.objects.filter(
-                    template_id=template
-                ).order_by("-id")[:1]
-
-                major_version, minor_version = max_version[0].version.split(".")
-                minor_version = str(int(minor_version) + 1)
-                version = major_version + "." + minor_version
-
-            tmp_ver = TemplateVersion.objects.create(
-                template_id=template,
-                version=version,
-                sample_context_data=data["sample_context_data"],
-                version_alias=data["version_alias"] if "version_alias" in data else "",
-                user_email=request.POST.get("email"),
-                tiny_url=data["tiny_url"],
-            )
-            tmp_ver.save()
-            for sub_tmp in data["sub_templates"]:
-                print(sub_tmp)
-                st = SubTemplate.objects.create(
-                    template_version_id=tmp_ver,
-                    config=TemplateConfig.objects.get(
-                        type=data["type"],
-                        sub_type=sub_tmp["sub_type"],
-                        render_mode=sub_tmp["render_mode"],
-                    ),
-                    data=sub_tmp["data"],
-                )
-                print(st)
-                st.save()
-
-            template_data = {
-                "name": data["name"],
-                "version": version,
-                "default": False,
-                "attributes": template.attributes,
-            }
+            user_email = request.POST.get("email")
+            template_data = save_template(data, user_email)
             return JsonResponse(template_data, status=201)
-
         except Exception as e:
             logger.exception(e)
 
@@ -538,7 +332,7 @@ def save_tiny_url(request):
 
 @csrf_exempt
 def get_render_template_view(request, name, version=None):
-    if request.method == "GET":
+    if request.method == "GET" or request.method == "POST":
         try:
             data = json.loads(request.body)
             if "context_data" not in data:
@@ -692,53 +486,11 @@ def get_template_details_view(request, name, version):
             if not data.get("default", False):
                 return HttpResponse(status=400)
 
-            try:
-                tmp = Template.objects.get(name=name)
-            except Exception:
-                raise (Exception("Validation: Template with given name does not exist"))
+            data['name'] = name
+            data['version'] = version
+            user_email = request.POST.get("email")
 
-            max_version = TemplateVersion.objects.filter(template_id=tmp).order_by(
-                "-id"
-            )[:1]
-
-            major_version, minor_version = max_version[0].version.split(".")
-            new_version = str(float(major_version) + 1)
-
-            try:
-                tmp_ver = TemplateVersion.objects.get(
-                    template_id=tmp.id, version=version
-                )
-            except Exception:
-                raise (
-                    Exception(
-                        "Validation: Template with given name and version does not exist"
-                    )
-                )
-
-            sts = SubTemplate.objects.filter(template_version_id=tmp_ver.id)
-
-            tmp_ver_new = TemplateVersion.objects.create(
-                template_id=tmp,
-                version=new_version,
-                sample_context_data=tmp_ver.sample_context_data,
-                version_alias=tmp_ver.version_alias,
-                user_email=request.POST.get("email"),
-            )
-            tmp_ver_new.save()
-
-            for st in sts:
-                SubTemplate.objects.create(
-                    template_version_id=tmp_ver_new, config=st.config, data=st.data
-                ).save()
-            tmp.default_version_id = tmp_ver_new.id
-            tmp.save(update_fields=["default_version_id", "modified_on"])
-
-            template_data = {
-                "name": tmp.name,
-                "version": tmp_ver_new.version,
-                "default": True if tmp.default_version_id == tmp_ver_new.id else False,
-                "attributes": tmp.attributes,
-            }
+            template_data = make_template_default(data, user_email)
             return JsonResponse(template_data, status=200)
 
         except Exception as e:
@@ -872,3 +624,238 @@ def patch_attributes_view(request, name):
             content_type="application/json",
             status=404,
         )
+
+
+@csrf_exempt
+def sync_template_from_vendor(request, vendor, channel):
+    if request.method != "POST":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+
+    # Post Request Processing
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        request_body = json.loads(request.body)
+        """
+        Request Body
+        {
+          "vendor": "GUPSHUP",
+          "channel": "WHATSAPP",
+          "data": [
+            {
+              "event_id": 5251693554363068000,
+              "field": "message_template_status_update",
+              "event": "ENABLED",
+              "message_template_name": "test_webhook_1",
+              "message_template_language": "en",
+              "message_template_id": 7140758,
+              "message_template_type": "TEXT",
+              "account": 2000184968,
+              "reason": "NONE",
+              "time": 1725562284
+            }
+          ]
+        }
+        """
+        try:
+            user_email = ROBO_EMAIL
+            if request.POST.get("email") is not None:
+                user_email = request.POST.get("email")
+            response = transform_and_save(request_body, user_email)
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=400,
+            )
+    else:
+        return HttpResponse(
+            json.dumps({"message": "no channel vendor found"}),
+            content_type="application/json",
+            status=404,
+        )
+
+
+@csrf_exempt
+def vendor_view(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            if ("vendor" not in data) or ("channel" not in data) or ("account_id" not in data):
+                return JsonResponse(json.dumps({"message": "required parameter missing"}), status=400)
+
+            data = save_vendor_info(data)
+
+            return JsonResponse(data, status=200)
+
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=500,
+            )
+
+    elif request.method == "GET":
+        try:
+            res = get_vendor_info()
+            return JsonResponse(res, status=200)
+
+
+        except Exception as e:
+            logger.exception(e)
+            return HttpResponse(
+                json.dumps({"message": str(e)}),
+                content_type="application/json",
+                status=404,
+            )
+
+
+@csrf_exempt
+def get_vendor_template(request, vendor, channel):
+    if request.method != "GET":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+    if request.GET.get("account_id") is None:
+        return JsonResponse(
+            {"message": "Account Id is required"},
+            status=400,
+        )
+    account_id = request.GET.get("account_id")
+    found_config = False
+    res = get_vendor_info()
+    for vendor_info in res['data']:
+        if vendor.lower() == vendor_info['vendor'].lower() and channel.lower() == vendor_info['channel'].lower() and account_id.lower() == vendor_info['vendor'].lower():
+            found_config = True
+            break
+    if not found_config:
+        JsonResponse({"message": "vendor config not found"}, status=400)
+
+    data = {}
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        template_detail = {
+            'user_id': str(account_id)
+        }
+        if request.GET.get("template_name") is not None:
+            template_detail['name'] = request.GET.get("template_name")
+        if request.GET.get("limit") is not None:
+            template_detail['limit'] = request.GET.get("limit")
+        else:
+            template_detail['limit'] = 10000
+        data = get_whatsapp_gupshup_template(template_detail)
+
+    elif vendor.lower() == 'airtel' and channel.lower() == "sms":
+        template_detail = {
+            'peid': str(account_id),
+            'limit': "1000000"
+        }
+        if request.GET.get("limit") is not None:
+            template_detail['limit'] = request.GET.get("limit")
+        data = get_airtel_sms_template(template_detail)
+
+    return JsonResponse(data, status=200)
+
+
+@csrf_exempt
+def sync_template_manual(request, vendor, channel):
+    if request.method != "POST":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+    user_email = ROBO_EMAIL
+    if request.POST.get("email") is not None:
+        user_email = request.POST.get("email")
+        user_email = "auto+" + user_email
+
+    request_body = json.loads(request.body)
+    if 'account_id' not in request_body or 'name' not in request_body:
+        return JsonResponse({'message': "account_id or name not found"}, status=400)
+
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        '''
+        {
+            "account_id": "2000XXXXX",
+            "name": "sample"
+        }
+        '''
+        data = {'vendor': vendor, 'channel': channel, 'data': [{
+            "message_template_name": request_body['name'],
+            "account": request_body['account_id']
+        }]}
+
+        res = transform_and_save(data, user_email)
+        return JsonResponse(res, status=201)
+
+    elif vendor.lower() == "airtel" and channel.lower() == "sms":
+        '''{
+            "account_id": "1101556610000021991",
+            "name": "Send Me Quote-2",
+            "dlt_message_sender": "gupshup",
+            "message_sender_account_id": "2000191675"
+        }
+        '''
+        if 'dlt_message_sender' not in request_body or 'message_sender_account_id' not in request_body:
+            return JsonResponse({'message': "dlt_message_sender or message_sender_account_id not found"}, status=400)
+
+        data = {'vendor': vendor, 'channel': channel, 'data': [request_body]}
+        res = transform_and_save(data, user_email)
+        return JsonResponse(res, status=201)
+
+    return HttpResponse(
+        json.dumps({"message": "no channel vendor found"}),
+        content_type="application/json",
+        status=404,
+    )
+
+
+@csrf_exempt
+def process_vendor_template_updates(request, vendor, channel):
+    if request.method != "POST":
+        return HttpResponse(
+            json.dumps({"message": "no method found"}),
+            content_type="application/json",
+            status=404,
+        )
+
+    if vendor.lower() == "gupshup" and channel.lower() == "whatsapp":
+        request_body = json.loads(request.body)
+        '''
+        [
+            {
+                "event_id": 4726775420256625000,
+                "field": "message_template_status_update",
+                "event": "ENABLED",
+                "message_template_name": "sample_template",
+                "message_template_language": "en",
+                "message_template_id": 9999999,
+                "message_template_type": "TEXT",
+                "account": "2000XXXXXX",
+                "reason": "NONE",
+                "time": 1662987166
+            }
+        ]
+        '''
+        data = {
+            "vendor": vendor,
+            "channel": channel,
+            "data": request_body
+        }
+        res = sqs_utils.send_message(data)
+
+        return JsonResponse(res, status=200)
+
+    return HttpResponse(
+        json.dumps({"message": "vendor or channel not found"}),
+        content_type="application/json",
+        status=404,
+    )

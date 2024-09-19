@@ -58,3 +58,22 @@ def generatePayload(templateTable, versionTable, data):
         )
         i = i + 1
     return ans
+
+
+def replace_placeholders(text):
+    def replacement(match):
+        # Extract the number from {{number}}
+        number = match.group(1)
+        return f"{{{{var{number}}}}}"  # return {{var<number>}}
+
+    # Regular expression to find {{number}}
+    replaced_text = re.sub(r"\{\{(\d+)\}\}", replacement, text)
+    return replaced_text
+
+
+def replace_sms_vars_with_placeholders(input_string):
+    count = 1
+    while '{#var#}' in input_string:
+        input_string = input_string.replace('{#var#}', f'{{{{var{count}}}}}', 1)
+        count += 1
+    return input_string

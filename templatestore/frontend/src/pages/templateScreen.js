@@ -8,6 +8,7 @@ import {
     backendSettings,
     getDateInSimpleFormat
 } from './../utils.js';
+import SyncTemplate from '../components/SyncTemplate.js';
 import PropTypes from 'prop-types';
 import styles from './../style/templateScreen.less';
 import SearchBox from './../components/searchBox/index';
@@ -38,6 +39,7 @@ class TemplateScreen extends Component {
             versions: [{ version: this.props.match.params.version }],
             subTemplatesData: {},
             config: {},
+            vendorDetail: {},
             contextData: '',
             alertMessage: '',
             attributes: '{}',
@@ -175,6 +177,17 @@ class TemplateScreen extends Component {
                     });
                 }
                 this.updateUrlKeyList();
+            })
+            .catch(function(error) {
+                console.log(error);
+            });
+        
+        axios
+            .get(backendSettings.TE_BASEPATH + '/api/v1/vendor')
+            .then(response => {
+                this.setState({
+                    vendorDetail: response.data
+                });
             })
             .catch(function(error) {
                 console.log(error);
@@ -492,8 +505,7 @@ class TemplateScreen extends Component {
         }
     }
 
-    onTemplateChange(subType, templateData) {
-        console.log(subType, templateData);
+    onTemplateChange(subType, templateData) {     
         this.setState({
             subTemplatesData: Object.keys(this.state.subTemplatesData).reduce(
                 (result, k) => {
@@ -630,16 +642,29 @@ class TemplateScreen extends Component {
 
     postTemplate(name, type, contextData, attributes) {
         try {
-            var re = new RegExp('^[a-zA-Z]+[a-zA-Z0-9_]*$');
+            var re = new RegExp('^[a-zA-Z0-9]+[a-zA-Z0-9_\\-\\s]*$');
             if (!re.test(name)) {
                 throw new Error(
                     'Validation: `' + name + '` is not a valid template name'
                 );
             }
-
             let subTemplates = [];
-            Object.keys(this.state.subTemplatesData).map(t => {
+            console.log("After -----", this.state.subTemplatesData)
+            Object.keys(this.state.subTemplatesData)
+            .filter(t => {
+                // Fix for removing empty button array in subtemplate
+                if (t === 'button') {
+                    let tmpButtonList = JSON.parse(this.state.subTemplatesData.button.data);
+                    if (tmpButtonList['buttons'].length === 0) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .map(t => {
+                console.log("POst template data -> ", t);
                 if (Array.isArray(this.state.subTemplatesData[t])) return;
+                
                 let subTemplate = {
                     sub_type: this.state.subTemplatesData[t].subType,
                     render_mode: this.state.subTemplatesData[t].renderMode,
@@ -647,7 +672,7 @@ class TemplateScreen extends Component {
                 };
                 subTemplates.push(subTemplate);
             });
-
+            console.log("Subtemplate Array-> ", subTemplates)
             try {
                 contextData = JSON.parse(contextData);
             } catch (error) {
@@ -1130,6 +1155,14 @@ class TemplateScreen extends Component {
         return (
             <div className="container ">
                 <div className={styles.teDetailPage}>
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<div className={styles.teTemplateHeader}>
+                        <h1>
+                            Auto Add New Template
+                        </h1>
+                    </div>) : ("")}
+                    <div>
+                    {this.state.type == 'whatsapp' || this.state.type == 'sms' ? (<SyncTemplate stateVar={this.state} history={this.props.history} />) : ('')}
+                    <br />
                     <div className={styles.teTemplateHeader}>
                         <h1>
                             {this.state.editable ?
@@ -1137,7 +1170,7 @@ class TemplateScreen extends Component {
                                 this.state.templateData.name}
                         </h1>
                     </div>
-                    <div>
+
                         {this.state.editable ? (
                             <input
                                 type="text"
@@ -1147,7 +1180,8 @@ class TemplateScreen extends Component {
                         ) : (
                             ''
                         )}
-                        <br />
+
+                        
                         <div className={styles.teVersionWrapper}>
                             <label>Version : </label>
                             {!this.state.editable ? (
