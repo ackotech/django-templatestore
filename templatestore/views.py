@@ -850,8 +850,16 @@ def process_vendor_template_updates(request, vendor, channel):
             "channel": channel,
             "data": request_body
         }
-        res = sqs_utils.send_message(data)
+        message_update_event = []
+        for event in request_body:
+            if event['field'].lower() == "message_template_status_update":
+                message_update_event.append(event)
 
+        if len(message_update_event) == 0:
+            return JsonResponse({"status": "No event found"}, status=200)
+
+        data['data'] = message_update_event
+        res = sqs_utils.send_message(data)
         return JsonResponse(res, status=200)
 
     return HttpResponse(
