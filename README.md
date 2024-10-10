@@ -71,5 +71,11 @@ Currently following templating libraries are supported:
     ```
     python manage.py runserver
     ```
+    
+  * In order to migrate all the models, there are 2 commands:
+    ```
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
 
   
