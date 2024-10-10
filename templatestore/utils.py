@@ -58,7 +58,7 @@ def generatePayload(templateTable, versionTable, data):
                 "journey": journey,
                 "expiry_time": expiry,
                 "channel": versionTable.tiny_url['channel'],
-                "mask": versionTable.tiny_url['mask']
+                "mask": versionTable.tiny_url.get("mask", None)
             }
         )
         i = i + 1

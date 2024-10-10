@@ -1275,7 +1275,8 @@ class TemplateScreen extends Component {
                 </div>
                     
                 {this.state.type == 'sms' ? (<div className={styles.teVersionWrapper}>
-                    Please register Dynamic Url in Tiny Url Section & Static Url / Email / Phone in DLT Portal (contact PMs)
+                    Please register Dynamic Url in Tiny Url Section & Static Url / Email / Phone in DLT Portal (contact PMs)<br />
+                    If dynamic url is not registered as Tiny Url, it will be treated as Static Url and SMS might be dropped if not registred in DLT portal Airtel / TATA.
                 </div>) : ''}
                 <div className={styles.teMarginTop20}>
                     <label>Sub Templates : </label>
