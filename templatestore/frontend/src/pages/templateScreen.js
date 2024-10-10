@@ -1500,6 +1500,8 @@ class TemplateScreen extends Component {
                         templateVersion={this.state.templateData.version}
                         tinyUrlObj={this.state.tinyUrlObj}
                         showAlerts={this.showAlerts}
+                        channel={this.state.type}
+                        attributeList={JSON.parse(this.state.attributes)}
                     />
                 </div>
                 {this.state.editable ? (

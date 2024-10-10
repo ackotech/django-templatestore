@@ -11,7 +11,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from templatestore import app_settings as ts_settings, sqs_utils
-from templatestore.app_settings import ROBO_EMAIL
+from templatestore.app_settings import ROBO_EMAIL, TINY_URL_LIST_KEY
 from templatestore.models import Template, TemplateVersion, SubTemplate, TemplateConfig
 from templatestore.template_utils import save_template, make_template_default, \
     save_vendor_info, get_vendor_info, get_whatsapp_gupshup_template, transform_and_save, get_airtel_sms_template
@@ -312,7 +312,10 @@ def save_tiny_url(request):
             "No corresponding version table exists for :" + name + " table"
         )
 
-    versionTable[0].tiny_url = data["tinyUrlArray"]
+    save_tiny_url_obj = {"channel": data['channel'],
+                         "mask": data['mask'],
+                         TINY_URL_LIST_KEY: data["tinyUrlArray"]}
+    versionTable[0].tiny_url = save_tiny_url_obj
 
     try:
         versionTable[0].save()
@@ -373,6 +376,10 @@ def get_render_template_view(request, name, version=None):
             i = 0
             while i < len(listOfData):
                 url = TINY_URL + "/api/v1/create_tiny_url"
+                # If channel is sms short url should in TRAI format
+                if listOfData[i]['channel'] == 'sms':
+                    url = TINY_URL + "/api/v1/header/url/create"
+
                 result = requests.post(
                     url,
                     json.dumps(listOfData[i]),
@@ -381,7 +388,7 @@ def get_render_template_view(request, name, version=None):
                 result = result.json()
                 temp = (
                     "data['context_data']"
-                    + tv.tiny_url[i]["urlKey"]
+                    + tv.tiny_url['tiny_url_list'][i]["urlKey"]
                     + "='"
                     + result["tiny_url"]
                     + "'"

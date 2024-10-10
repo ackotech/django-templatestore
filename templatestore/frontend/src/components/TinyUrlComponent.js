@@ -55,9 +55,11 @@ export default function TinyUrlComponent(props) {
                 return;
             }
         }
+        data.channel = props.channel;
         data.tinyUrlArray = props.items;
         data.templateName = props.templateName ? props.templateName : "";
         data.templateVersion = props.templateVersion ? props.templateVersion : "";
+        data.mask = props.attributeList['mask'];
         axios({
             method: 'put',
             url: backendSettings.TE_BASEPATH + '/api/v1/tiny_url',

@@ -4,6 +4,8 @@ from dateutil.relativedelta import relativedelta
 import pytz
 import re
 
+from templatestore import app_settings
+
 regex = re.compile(
         r'^https?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
@@ -30,13 +32,14 @@ def generateDate(days):
 def generatePayload(templateTable, versionTable, data):
     ans = []
     i = 0
-    while i < len(versionTable.tiny_url):
-        original_url = "data" + "['context_data']" + versionTable.tiny_url[i]["urlKey"]
+    tiny_url_list = versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY]
+    while i < len(tiny_url_list):
+        original_url = "data" + "['context_data']" + versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY][i]["urlKey"]
         
         try:
             eval(original_url)
         except Exception as e:
-            raise Exception("Key not found: "+versionTable.tiny_url[i]["urlKey"])
+            raise Exception("Key not found: "+versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY][i]["urlKey"])
 
         try:
             if(re.match(regex, eval(original_url)) is None):
@@ -46,7 +49,7 @@ def generatePayload(templateTable, versionTable, data):
         
         lob = templateTable.attributes["lob"]
         journey = templateTable.attributes["journey"]
-        days = versionTable.tiny_url[i]["expiry"]
+        days = versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY][i]["expiry"]
         expiry = generateDate(int(days))
         ans.append(
             {
@@ -54,6 +57,8 @@ def generatePayload(templateTable, versionTable, data):
                 "lob": lob,
                 "journey": journey,
                 "expiry_time": expiry,
+                "channel": versionTable.tiny_url['channel'],
+                "mask": versionTable.tiny_url['mask']
             }
         )
         i = i + 1
