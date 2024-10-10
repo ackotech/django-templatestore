@@ -1273,6 +1273,10 @@ class TemplateScreen extends Component {
                         ''
                     )}
                 </div>
+                    
+                {this.state.type == 'sms' ? (<div className={styles.teVersionWrapper}>
+                    Please register Dynamic Url in Tiny Url Section & Static Url / Email / Phone in DLT Portal (contact PMs)
+                </div>) : ''}
                 <div className={styles.teMarginTop20}>
                     <label>Sub Templates : </label>
                 </div>
