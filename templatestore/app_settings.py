@@ -20,7 +20,7 @@ GUPSHUP_WA_CREDENTIAL = getattr(settings, "GUPSHUP_WA_CREDENTIAL", [])
 GUPSHUP_WA_CREDENTIAL_LOB_MAP = getattr(settings, "GUPSHUP_WA_CREDENTIAL_LOB_MAP", {})
 SMS_CREDENTIAL_LOB_MAP = getattr(settings, "SMS_CREDENTIAL_LOB_MAP", {})
 ROBO_EMAIL = getattr(settings, "ROBO_EMAIL", "")
-TINY_URL_LIST_KEY = getattr(settings, 'TINY_URL_LIST_KEY', "tiny_url_list") #TODO: Add in ackotemplate
+TINY_URL_LIST_KEY = getattr(settings, 'TINY_URL_LIST_KEY', "tiny_url_list")
 
 AIRTEL_SMS_TEMPLATE_URL = getattr(settings, "AIRTEL_SMS_TEMPLATE_URL", "https://www.airtel.in/business/commercial-communication/dlttemplate/findByPEIDTTYPEPagination/")
 TEMPLATE_SYNC_SQS = getattr(settings, "TEMPLATE_SYNC_SQS", "https://sqs.ap-south-1.amazonaws.com/663498825379/central-growth-template-update-sync")
