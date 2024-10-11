@@ -32,7 +32,7 @@ def generateDate(days):
 def generatePayload(templateTable, versionTable, data):
     ans = []
     i = 0
-    tiny_url_list = versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY]
+    tiny_url_list = versionTable.tiny_url.get(app_settings.TINY_URL_LIST_KEY, [])
     while i < len(tiny_url_list):
         original_url = "data" + "['context_data']" + versionTable.tiny_url[app_settings.TINY_URL_LIST_KEY][i]["urlKey"]
         
