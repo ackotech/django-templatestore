@@ -83,6 +83,10 @@ DATABASES = {
 
 
 
+
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -174,5 +178,6 @@ TE_ROWLIMIT = 1000
 TE_BASEPATH = "/"
 
 ROBO_EMAIL = "robo-central-growth@acko.tech"
+TINY_URL_LIST_KEY = 'tiny_url_list'
 
 # GDAL_LIBRARY_PATH = "/opt/homebrew/Cellar/gdal/3.9.0_1/lib/libgdal.dylib"
