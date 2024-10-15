@@ -1,4 +1,5 @@
-# django-templatestore
+# Deprecated, Proceed to central-template-store repository
+## django-templatestore
 ![Python application](https://github.com/wilspi/django-templatestore/workflows/Python%20application/badge.svg?branch=master)     
 
 `django-templatestore` is a [Django](https://www.djangoproject.com/) application/ UI tool to edit and save your templates. 
